@@ -3,75 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ยื่นใบลา</title>
+  <title>ยื่นใบลา — ระบบลาออนไลน์</title>
 
   <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
 
+  <!-- Google Fonts: Noto Sans Thai + Sarabun -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    /* ===== CSS Variables ===== */
+    /* ===== CSS Variables — ธีมน้ำเงิน-ทอง =====  */
     :root {
-      --blue:       #005BBB;
-      --blue-light: #E8F0FE;
-      --blue-mid:   #3B82F6;
-      --green:      #00B900;
-      --red:        #E74C3C;
-      --orange:     #F39C12;
-      --gray-50:    #F9FAFB;
-      --gray-100:   #F3F4F6;
-      --gray-200:   #E5E7EB;
-      --gray-400:   #9CA3AF;
-      --gray-600:   #6B7280;
-      --gray-800:   #1F2937;
-      --white:      #FFFFFF;
-      --radius:     12px;
-      --shadow:     0 2px 16px rgba(0,91,187,0.12);
+      --navy:        #0D1B3E;
+      --navy-mid:    #152A54;
+      --royal-blue:  #1E3A6E;
+      --blue:        #2B5EA7;
+      --blue-light:  #3B7DD8;
+
+      --gold:        #C5A55A;
+      --gold-light:  #F5E6C8;
+      --gold-pale:   #FBF4E4;
+      --gold-dark:   #8B7340;
+      --gold-glow:   #D4B76A;
+
+      --green:       #2D8B4E;
+      --green-light: #E8F5ED;
+      --red:         #C0392B;
+      --red-light:   #FEE;
+      --orange:      #D4880F;
+      --orange-light:#FEF6E3;
+
+      --gray-50:     #FAFAF8;
+      --gray-100:    #F3F2EE;
+      --gray-200:    #E5E3DC;
+      --gray-400:    #9CA3AF;
+      --gray-600:    #6B7280;
+      --gray-800:    #1F2937;
+      --white:       #FFFFFF;
+
+      --radius:      14px;
+      --radius-sm:   10px;
+      --shadow:      0 4px 24px rgba(13,27,62,0.10);
+      --shadow-sm:   0 2px 12px rgba(13,27,62,0.06);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-      background: linear-gradient(160deg, #E8F0FE 0%, #F9FAFB 60%);
+      font-family: 'Noto Sans Thai', 'Sarabun', sans-serif;
+      background: linear-gradient(180deg, var(--navy) 0%, var(--navy-mid) 260px, var(--gray-50) 260px);
       min-height: 100vh;
       color: var(--gray-800);
     }
 
     /* ===== Header ===== */
     .header {
-      background: var(--blue);
+      background: linear-gradient(135deg, var(--navy) 0%, var(--royal-blue) 100%);
       color: white;
-      padding: 20px 20px 28px;
+      padding: 24px 20px 36px;
       position: relative;
       overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 160px; height: 160px;
+      background: radial-gradient(circle, rgba(197,165,90,0.15) 0%, transparent 70%);
+      border-radius: 50%;
     }
     .header::after {
       content: '';
       position: absolute;
-      bottom: -20px; left: 0; right: 0;
-      height: 40px;
+      bottom: -16px; left: 0; right: 0;
+      height: 32px;
       background: var(--gray-50);
-      border-radius: 40px 40px 0 0;
+      border-radius: 24px 24px 0 0;
+    }
+    .header-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .header-mascot {
+      font-size: 32px;
+      line-height: 1;
     }
     .header-org {
-      font-size: 12px;
-      color: #aaccff;
-      margin-bottom: 4px;
-      letter-spacing: 0.5px;
+      font-size: 11px;
+      color: var(--gold);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 600;
     }
     .header-title {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--white);
+      margin-top: 2px;
     }
     .header-sub {
       font-size: 13px;
-      color: #cce0ff;
+      color: #8899BB;
       margin-top: 4px;
+    }
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(197,165,90,0.2);
+      border: 1px solid rgba(197,165,90,0.3);
+      border-radius: 20px;
+      padding: 4px 12px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--gold);
+      font-weight: 600;
     }
 
     /* ===== Form Container ===== */
     .form-container {
-      padding: 16px 16px 100px;
+      padding: 8px 16px 100px;
       max-width: 500px;
       margin: 0 auto;
     }
@@ -82,22 +135,30 @@
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       padding: 20px;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(197,165,90,0.08);
     }
     .section-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--navy);
       margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
+    .section-title .icon {
+      width: 28px; height: 28px;
+      background: var(--gold-pale);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
     .section-title::after {
       content: '';
       flex: 1;
       height: 1px;
-      background: var(--blue-light);
+      background: linear-gradient(90deg, var(--gold-light), transparent);
     }
 
     /* ===== Field ===== */
@@ -111,114 +172,130 @@
       color: var(--gray-600);
       margin-bottom: 6px;
     }
-    label .req { color: var(--red); margin-left: 3px; }
+    label .req { color: var(--red); margin-left: 3px; font-size: 11px; }
+    label .opt { color: var(--gray-400); margin-left: 4px; font-size: 11px; font-weight: 400; }
 
     input[type="text"],
     input[type="date"],
     select,
     textarea {
       width: 100%;
-      padding: 12px 14px;
+      padding: 13px 14px;
       border: 1.5px solid var(--gray-200);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       font-size: 15px;
       font-family: inherit;
       color: var(--gray-800);
       background: var(--gray-50);
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
       appearance: none;
       -webkit-appearance: none;
     }
     input:focus, select:focus, textarea:focus {
       outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px rgba(0, 91, 187, 0.1);
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.15);
       background: var(--white);
     }
     input.error, select.error, textarea.error {
       border-color: var(--red);
-      box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
     }
-    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
     textarea { resize: vertical; min-height: 80px; }
 
-    /* ===== Date Range ===== */
+    /* ===== Date Row ===== */
     .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-    /* ===== Day Count Badge ===== */
+    /* ===== Day Badge ===== */
     .day-badge {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      background: var(--blue-light);
-      border-radius: 10px;
-      margin-top: 8px;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--gold-pale), var(--gold-light));
+      border: 1px solid rgba(197,165,90,0.2);
+      border-radius: var(--radius-sm);
+      margin-top: 10px;
     }
     .day-badge .count {
-      font-size: 28px;
+      font-size: 32px;
       font-weight: 800;
-      color: var(--blue);
+      color: var(--navy);
       line-height: 1;
     }
-    .day-badge .label { font-size: 13px; color: var(--gray-600); }
-    .day-badge.warn { background: #FEF3C7; }
+    .day-badge .label { font-size: 13px; color: var(--gray-600); font-weight: 600; }
+    .day-badge .sublabel { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .day-badge.warn {
+      background: linear-gradient(135deg, #FEF6E3, #FEF0D0);
+      border-color: rgba(212,136,15,0.3);
+    }
     .day-badge.warn .count { color: var(--orange); }
     .day-badge.hidden { display: none; }
 
-    /* ===== Leave Type Selector ===== */
+    /* ===== Leave Type Grid ===== */
     .type-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
     }
     .type-card {
-      padding: 14px 10px;
+      padding: 14px 8px;
       border: 2px solid var(--gray-200);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
       background: var(--white);
     }
     .type-card.selected {
-      border-color: var(--blue);
-      background: var(--blue-light);
+      border-color: var(--gold);
+      background: var(--gold-pale);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.12);
     }
-    .type-card:active { transform: scale(0.97); }
-    .type-card .icon { font-size: 24px; display: block; margin-bottom: 4px; }
-    .type-card .name { font-size: 13px; font-weight: 600; color: var(--gray-800); }
-    .type-card.selected .name { color: var(--blue); }
+    .type-card:active { transform: scale(0.96); }
+    .type-card .icon { font-size: 26px; display: block; margin-bottom: 4px; }
+    .type-card .name { font-size: 12px; font-weight: 600; color: var(--gray-800); }
+    .type-card.selected .name { color: var(--navy); }
 
     /* ===== File Upload ===== */
     .upload-area {
       border: 2px dashed var(--gray-200);
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       padding: 20px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s;
       background: var(--gray-50);
     }
-    .upload-area:hover { border-color: var(--blue); background: var(--blue-light); }
+    .upload-area:hover, .upload-area:active {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+    }
     .upload-area .icon { font-size: 28px; margin-bottom: 8px; }
     .upload-area p { font-size: 13px; color: var(--gray-600); }
-    .upload-name { font-size: 13px; color: var(--green); margin-top: 8px; display: none; }
+    .upload-name { font-size: 13px; color: var(--green); margin-top: 8px; display: none; font-weight: 600; }
     #fileInput { display: none; }
 
-    /* ===== Submit Button ===== */
+    /* ===== Submit Bar ===== */
     .submit-bar {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      padding: 16px;
+      padding: 14px 16px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
       background: var(--white);
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
       z-index: 100;
     }
     .btn-submit {
       width: 100%;
       padding: 16px;
-      background: var(--blue);
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
       color: white;
       border: none;
       border-radius: 12px;
@@ -231,9 +308,10 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
     }
-    .btn-submit:active { transform: scale(0.98); background: #004a9e; }
-    .btn-submit:disabled { background: var(--gray-400); cursor: not-allowed; }
+    .btn-submit:active { transform: scale(0.98); filter: brightness(0.95); }
+    .btn-submit:disabled { background: var(--gray-400); cursor: not-allowed; text-shadow: none; }
     .btn-submit.loading { background: var(--gray-400); }
 
     /* ===== Spinner ===== */
@@ -249,7 +327,7 @@
     .btn-submit.loading .btn-text { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ===== Success State ===== */
+    /* ===== Success Screen ===== */
     .success-screen {
       display: none;
       flex-direction: column;
@@ -258,6 +336,7 @@
       min-height: 100vh;
       padding: 40px 24px;
       text-align: center;
+      background: linear-gradient(180deg, var(--navy) 0%, var(--royal-blue) 40%, var(--gray-50) 40%);
     }
     .success-screen.show { display: flex; }
     .success-icon {
@@ -268,26 +347,37 @@
       font-size: 48px;
       margin-bottom: 24px;
       animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 32px rgba(45,139,78,0.3);
     }
     @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .success-title { font-size: 24px; font-weight: 800; color: var(--gray-800); margin-bottom: 8px; }
-    .success-sub   { font-size: 15px; color: var(--gray-600); margin-bottom: 24px; }
+    .success-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 24px;
+      max-width: 360px;
+      width: 100%;
+    }
+    .success-title { font-size: 22px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
     .leave-id-badge {
-      background: var(--blue-light);
-      border-radius: 10px;
+      background: var(--gold-pale);
+      border: 1px solid rgba(197,165,90,0.3);
+      border-radius: var(--radius-sm);
       padding: 12px 24px;
       font-size: 16px;
       font-weight: 700;
-      color: var(--blue);
+      color: var(--navy);
       letter-spacing: 1px;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
+      display: inline-block;
     }
     .btn-close {
       padding: 14px 40px;
-      background: var(--blue);
-      color: white;
+      background: linear-gradient(135deg, var(--navy), var(--royal-blue));
+      color: var(--gold);
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       font-size: 15px;
       font-weight: 700;
       font-family: inherit;
@@ -301,7 +391,7 @@
       background: var(--red);
       color: white;
       padding: 14px 16px;
-      border-radius: 10px;
+      border-radius: var(--radius-sm);
       font-size: 14px;
       font-weight: 600;
       z-index: 200;
@@ -311,54 +401,82 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      box-shadow: 0 4px 20px rgba(192,57,43,0.3);
     }
     .toast.show { transform: translateY(0); opacity: 1; }
 
     /* ===== Loading overlay ===== */
     .init-loading {
       position: fixed; inset: 0;
-      background: var(--blue);
+      background: linear-gradient(135deg, var(--navy), var(--royal-blue));
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       color: white; z-index: 999;
     }
+    .init-loading .mascot { font-size: 56px; margin-bottom: 16px; }
+    .init-loading .title { font-size: 20px; font-weight: 800; color: var(--gold); }
+    .init-loading .sub { font-size: 13px; color: #8899BB; margin-top: 6px; }
     .init-loading .dot {
-      display: flex; gap: 8px; margin-top: 20px;
+      display: flex; gap: 8px; margin-top: 24px;
     }
     .init-loading .dot span {
-      width: 10px; height: 10px;
-      background: rgba(255,255,255,0.6);
+      width: 8px; height: 8px;
+      background: var(--gold);
       border-radius: 50%;
       animation: bounce 1.2s infinite;
     }
     .init-loading .dot span:nth-child(2) { animation-delay: 0.2s; }
     .init-loading .dot span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.5} 40%{transform:scale(1.2);opacity:1} }
+    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.3);opacity:1} }
+
+    /* ===== Misc ===== */
+    .info-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--gold-pale);
+      border-radius: 8px;
+      border-left: 3px solid var(--gold);
+      margin-top: 12px;
+    }
+    .info-note .note-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .info-note .note-text { font-size: 12px; color: var(--gray-600); line-height: 1.5; }
   </style>
 </head>
 <body>
 
 <!-- Loading Screen -->
 <div class="init-loading" id="initLoading">
-  <div style="font-size:40px;margin-bottom:12px">📋</div>
-  <div style="font-size:18px;font-weight:700">ระบบลาออนไลน์</div>
-  <div style="font-size:13px;opacity:0.8;margin-top:6px">กำลังโหลด...</div>
+  <div class="mascot">🦙</div>
+  <div class="title">ระบบลาออนไลน์</div>
+  <div class="sub">กำลังเตรียมแบบฟอร์ม...</div>
   <div class="dot"><span></span><span></span><span></span></div>
 </div>
 
 <!-- Main Form -->
 <div id="mainForm" style="display:none">
   <div class="header">
-    <div class="header-org" id="orgName">มหาวิทยาลัยธรรมศาสตร์</div>
-    <div class="header-title">📋 ยื่นใบลา</div>
-    <div class="header-sub">กรอกข้อมูลให้ครบถ้วน ระบบจะแจ้งผลทาง LINE</div>
+    <div class="header-top">
+      <span class="header-mascot">🦙</span>
+      <div>
+        <div class="header-org" id="orgName">มหาวิทยาลัยธรรมศาสตร์</div>
+        <div class="header-title">ยื่นใบลาออนไลน์</div>
+      </div>
+    </div>
+    <div class="header-sub">กรอกข้อมูลให้ครบ ระบบจะแจ้งผลผ่าน LINE ทันที</div>
+    <div class="header-badge">
+      <span>🔒</span> ข้อมูลปลอดภัย ส่งตรงถึงหัวหน้า
+    </div>
   </div>
 
   <div class="form-container">
 
     <!-- ข้อมูลผู้ลา -->
     <div class="section">
-      <div class="section-title">👤 ข้อมูลผู้ลา</div>
+      <div class="section-title">
+        <span class="icon">👤</span> ข้อมูลผู้ลา
+      </div>
       <div class="field">
         <label>ชื่อ-นามสกุล <span class="req">*</span></label>
         <input type="text" id="name" placeholder="เช่น นางสาวสมใจ ใจดี" autocomplete="name">
@@ -371,7 +489,9 @@
 
     <!-- ประเภทการลา -->
     <div class="section">
-      <div class="section-title">📋 ประเภทการลา</div>
+      <div class="section-title">
+        <span class="icon">📋</span> ประเภทการลา <span class="req" style="margin-left:4px">*</span>
+      </div>
       <div class="type-grid" id="typeGrid">
         <div class="type-card" data-value="ลาพักร้อน">
           <span class="icon">🏖️</span><span class="name">ลาพักร้อน</span>
@@ -389,15 +509,17 @@
           <span class="icon">🙏</span><span class="name">ลาบวช</span>
         </div>
         <div class="type-card" data-value="ลาอื่นๆ">
-          <span class="icon">📄</span><span class="name">อื่นๆ</span>
+          <span class="icon">📄</span><span class="name">อื่น ๆ</span>
         </div>
       </div>
       <input type="hidden" id="leaveType">
     </div>
 
-    <!-- วันที่ -->
+    <!-- ระยะเวลาลา -->
     <div class="section">
-      <div class="section-title">📅 ระยะเวลาลา</div>
+      <div class="section-title">
+        <span class="icon">📅</span> ระยะเวลาลา
+      </div>
       <div class="date-row">
         <div class="field">
           <label>วันที่เริ่มลา <span class="req">*</span></label>
@@ -412,26 +534,33 @@
         <span class="count" id="dayCount">0</span>
         <div>
           <div class="label">วันทำการที่ลา</div>
-          <div style="font-size:11px;color:#9CA3AF" id="dateRangeText"></div>
+          <div class="sublabel" id="dateRangeText"></div>
         </div>
       </div>
     </div>
 
-    <!-- เหตุผล -->
+    <!-- รายละเอียด -->
     <div class="section">
-      <div class="section-title">📝 รายละเอียด</div>
-      <div class="field">
-        <label>เหตุผลการลา <span class="req">*</span></label>
-        <textarea id="reason" placeholder="ระบุเหตุผลการลาโดยย่อ..." rows="3"></textarea>
+      <div class="section-title">
+        <span class="icon">📝</span> รายละเอียด
       </div>
       <div class="field">
-        <label>เอกสารแนบ <small style="color:#9CA3AF;font-weight:400">(ถ้ามี)</small></label>
+        <label>เหตุผลการลา <span class="opt">(ไม่บังคับ)</span></label>
+        <textarea id="reason" placeholder="ระบุเหตุผลการลาโดยย่อ (ถ้ามี)..." rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>เอกสารแนบ <span class="opt">(ถ้ามี)</span></label>
         <div class="upload-area" onclick="document.getElementById('fileInput').click()">
           <div class="icon">📎</div>
-          <p>แตะเพื่อแนบไฟล์<br><small>PDF, JPG, PNG (ไม่เกิน 5MB)</small></p>
+          <p>แตะเพื่อแนบไฟล์<br><small style="color:#9CA3AF">PDF, JPG, PNG (ไม่เกิน 5MB)</small></p>
         </div>
         <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
         <div class="upload-name" id="uploadName">📎 <span id="fileName"></span></div>
+      </div>
+
+      <div class="info-note">
+        <span class="note-icon">💡</span>
+        <span class="note-text">ลาป่วยเกิน 3 วัน ต้องแนบใบรับรองแพทย์ด้วยนะคะ</span>
       </div>
     </div>
 
@@ -440,7 +569,7 @@
   <!-- Submit Bar -->
   <div class="submit-bar">
     <button class="btn-submit" id="submitBtn" onclick="submitForm()">
-      <span class="btn-text">✉️ ส่งคำขอลา</span>
+      <span class="btn-text">🦙 ส่งคำขอลา</span>
       <div class="spinner"></div>
     </button>
   </div>
@@ -449,10 +578,13 @@
 <!-- Success Screen -->
 <div class="success-screen" id="successScreen">
   <div class="success-icon">✅</div>
-  <div class="success-title">ส่งใบลาสำเร็จ!</div>
-  <div class="success-sub">ระบบจะแจ้งผลทาง LINE<br>เมื่อหัวหน้าดำเนินการแล้ว</div>
-  <div class="leave-id-badge" id="leaveIdDisplay">—</div>
-  <button class="btn-close" onclick="closeLIFF()">ปิดหน้าต่าง</button>
+  <div class="success-card">
+    <div class="success-title">ส่งใบลาสำเร็จ!</div>
+    <div class="success-sub">🦙 ลาจะแจ้งผลทาง LINE ทันที<br>เมื่อหัวหน้าดำเนินการแล้วค่ะ</div>
+    <div class="leave-id-badge" id="leaveIdDisplay">—</div>
+    <br>
+    <button class="btn-close" onclick="closeLIFF()">ปิดหน้าต่าง</button>
+  </div>
 </div>
 
 <!-- Toast Error -->
@@ -460,8 +592,7 @@
 
 <script>
 // ===== Config =====
-// ⚠️ แก้ค่าเหล่านี้ก่อน deploy
-const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';  // URL จาก Deploy > Web App
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
 const LIFF_ID         = '2010068016-uNZ0EWnx';
 
 let lineUserId     = '';
@@ -481,18 +612,24 @@ async function initLIFF() {
     const profile = await liff.getProfile();
     lineUserId    = profile.userId;
 
-    // ตั้งวันที่ default เป็นวันนี้
+    // Pre-fill name from LINE profile
+    const nameField = document.getElementById('name');
+    if (!nameField.value && profile.displayName) {
+      // Don't auto-fill — user should enter their real name
+    }
+
+    // Default dates = today
     const today    = new Date();
     const todayStr = toDateStr(today);
     document.getElementById('startDate').value = todayStr;
     document.getElementById('endDate').value   = todayStr;
     calcDays();
 
-    // แสดงฟอร์ม
+    // Show form
     document.getElementById('initLoading').style.display = 'none';
     document.getElementById('mainForm').style.display    = 'block';
 
-    // ดึง userId จาก query param ถ้ามี (fallback)
+    // Fallback userId from query param
     if (!lineUserId) {
       const params = new URLSearchParams(window.location.search);
       lineUserId   = params.get('userId') || '';
@@ -500,14 +637,19 @@ async function initLIFF() {
 
   } catch (err) {
     console.error('LIFF init error:', err);
-    // ถ้าไม่ได้รันใน LINE (ทดสอบใน browser) ให้แสดงฟอร์มปกติ
+    // Browser testing fallback
     lineUserId = new URLSearchParams(window.location.search).get('userId') || 'TEST_USER';
     document.getElementById('initLoading').style.display = 'none';
     document.getElementById('mainForm').style.display    = 'block';
+
+    const today = toDateStr(new Date());
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value   = today;
+    calcDays();
   }
 }
 
-// ===== ประเภทการลา =====
+// ===== Leave Type Selection =====
 document.getElementById('typeGrid').addEventListener('click', e => {
   const card = e.target.closest('.type-card');
   if (!card) return;
@@ -517,7 +659,7 @@ document.getElementById('typeGrid').addEventListener('click', e => {
   document.getElementById('leaveType').value = selectedType;
 });
 
-// ===== คำนวณวัน =====
+// ===== Calculate Working Days =====
 function calcDays() {
   const s = document.getElementById('startDate').value;
   const e = document.getElementById('endDate').value;
@@ -530,7 +672,6 @@ function calcDays() {
     return calcDays();
   }
 
-  // นับวันทำการ (จ-ศ)
   let days = 0;
   const cur = new Date(start);
   while (cur <= end) {
@@ -548,7 +689,7 @@ function calcDays() {
 }
 
 document.getElementById('startDate').addEventListener('change', calcDays);
-document.getElementById('endDate').addEventListener('change',   calcDays);
+document.getElementById('endDate').addEventListener('change', calcDays);
 
 // ===== File Upload =====
 document.getElementById('fileInput').addEventListener('change', function() {
@@ -559,28 +700,35 @@ document.getElementById('fileInput').addEventListener('change', function() {
     this.value = '';
     return;
   }
-  document.getElementById('fileName').textContent  = file.name;
+  document.getElementById('fileName').textContent     = file.name;
   document.getElementById('uploadName').style.display = 'block';
 
-  // แปลงเป็น base64 (สำหรับส่งไป GAS หรือ upload ต่อ)
   const reader = new FileReader();
   reader.onload  = r => { uploadedFileB64 = r.result; };
   reader.readAsDataURL(file);
 });
 
-// ===== Validate =====
+// ===== Validate — เหตุผลไม่บังคับแล้ว =====
 function validate() {
   let ok = true;
-  const fields = ['name', 'department', 'startDate', 'endDate', 'reason'];
-  fields.forEach(id => {
+
+  // Required fields (ไม่รวม reason)
+  const requiredFields = ['name', 'department', 'startDate', 'endDate'];
+  requiredFields.forEach(id => {
     const el = document.getElementById(id);
     el.classList.remove('error');
     if (!el.value.trim()) { el.classList.add('error'); ok = false; }
   });
+
+  if (!ok) {
+    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ');
+  }
+
   if (!selectedType) {
     showToast('กรุณาเลือกประเภทการลา');
     ok = false;
   }
+
   const start = new Date(document.getElementById('startDate').value);
   const end   = new Date(document.getElementById('endDate').value);
   if (end < start) {
@@ -610,14 +758,14 @@ async function submitForm() {
     startDate:  formatThai(new Date(document.getElementById('startDate').value)),
     endDate:    formatThai(new Date(document.getElementById('endDate').value)),
     days:       days,
-    reason:     document.getElementById('reason').value.trim(),
+    reason:     document.getElementById('reason').value.trim(),  // อาจว่างก็ได้
     attachment: uploadedFileB64 ? 'มีเอกสารแนบ' : '',
   };
 
   try {
     const res = await fetch(GAS_WEB_APP_URL, {
       method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },  // GAS ต้องการ text/plain
+      headers: { 'Content-Type': 'text/plain' },
       body:    JSON.stringify(payload),
     });
 
@@ -640,13 +788,13 @@ async function submitForm() {
 
 // ===== Success =====
 function showSuccess(leaveId) {
-  document.getElementById('mainForm').style.display          = 'none';
+  document.getElementById('mainForm').style.display = 'none';
   document.getElementById('successScreen').classList.add('show');
-  document.getElementById('leaveIdDisplay').textContent      = leaveId;
+  document.getElementById('leaveIdDisplay').textContent = leaveId;
 }
 
 function closeLIFF() {
-  if (liff.isInClient()) {
+  if (typeof liff !== 'undefined' && liff.isInClient()) {
     liff.closeWindow();
   } else {
     window.close();
@@ -658,7 +806,7 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   document.getElementById('toastMsg').textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
 // ===== Helpers =====
