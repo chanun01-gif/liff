@@ -3,754 +3,1081 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ระบบลาออนไลน์</title>
+  <title>ยื่นใบลา — ระบบลาออนไลน์</title>
+
+  <!-- LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+
+  <!-- Google Fonts: Noto Sans Thai + Sarabun -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
   <style>
+    /* ===== CSS Variables — ธีมน้ำเงิน-ทอง =====  */
     :root {
-      --navy:       #0D1B3E;
-      --navy-mid:   #152A54;
-      --royal:      #1E3A6E;
-      --blue:       #2B5EA7;
-      --gold:       #C5A55A;
-      --gold-light: #F5E6C8;
-      --gold-pale:  #FBF4E4;
-      --gold-dark:  #8B7340;
-      --green:      #2D8B4E;
-      --green-bg:   #E8F5ED;
-      --red:        #C0392B;
-      --red-bg:     #FEE2E2;
-      --orange:     #D4880F;
-      --orange-bg:  #FEF6E3;
-      --gray-50:    #FAFAF8;
-      --gray-100:   #F3F2EE;
-      --gray-200:   #E5E3DC;
-      --gray-400:   #9CA3AF;
-      --gray-600:   #6B7280;
-      --gray-800:   #1F2937;
-      --white:      #FFFFFF;
-      --tab-h:      60px;
-      --radius:     14px;
-      --shadow:     0 4px 24px rgba(13,27,62,0.10);
+      --navy:        #0D1B3E;
+      --navy-mid:    #152A54;
+      --royal-blue:  #1E3A6E;
+      --blue:        #2B5EA7;
+      --blue-light:  #3B7DD8;
+
+      --gold:        #C5A55A;
+      --gold-light:  #F5E6C8;
+      --gold-pale:   #FBF4E4;
+      --gold-dark:   #8B7340;
+      --gold-glow:   #D4B76A;
+
+      --green:       #2D8B4E;
+      --green-light: #E8F5ED;
+      --red:         #C0392B;
+      --red-light:   #FEE;
+      --orange:      #D4880F;
+      --orange-light:#FEF6E3;
+
+      --gray-50:     #FAFAF8;
+      --gray-100:    #F3F2EE;
+      --gray-200:    #E5E3DC;
+      --gray-400:    #9CA3AF;
+      --gray-600:    #6B7280;
+      --gray-800:    #1F2937;
+      --white:       #FFFFFF;
+
+      --radius:      14px;
+      --radius-sm:   10px;
+      --shadow:      0 4px 24px rgba(13,27,62,0.10);
+      --shadow-sm:   0 2px 12px rgba(13,27,62,0.06);
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: 'Noto Sans Thai', sans-serif;
+      font-family: 'Noto Sans Thai', 'Sarabun', sans-serif;
       background: var(--gray-50);
-      color: var(--gray-800);
       min-height: 100vh;
-      overscroll-behavior: none;
+      color: var(--gray-800);
     }
 
-    /* ── Init Loading ── */
-    #initLoading {
-      position: fixed; inset: 0; z-index: 9999;
-      background: linear-gradient(135deg, var(--navy), var(--royal));
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      color: white;
-    }
-    #initLoading .mascot { font-size: 56px; margin-bottom: 16px; }
-    #initLoading .title { font-size: 20px; font-weight: 800; color: var(--gold); }
-    #initLoading .sub { font-size: 13px; color: #8899BB; margin-top: 6px; }
-    .dots { display: flex; gap: 8px; margin-top: 24px; }
-    .dots span {
-      width: 8px; height: 8px; background: var(--gold); border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-    .dots span:nth-child(2) { animation-delay: .2s; }
-    .dots span:nth-child(3) { animation-delay: .4s; }
-    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.3);opacity:1} }
-
-    /* ── App Shell ── */
-    #app { display: none; }
-
-    /* ── Top Header ── */
-    .app-header {
-      position: sticky; top: 0; z-index: 100;
-      background: var(--navy);
-      padding: 14px 16px 10px;
-    }
-    .app-header-inner {
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .app-logo { display: flex; align-items: center; gap: 10px; }
-    .app-logo .alpaca { font-size: 26px; }
-    .app-logo .org { font-size: 10px; color: #8899BB; font-weight: 500; }
-    .app-logo .sys { font-size: 14px; color: var(--gold); font-weight: 800; }
-    .app-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: var(--royal); overflow: hidden;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--gold); font-weight: 800; font-size: 16px;
-      border: 2px solid rgba(197,165,90,0.4);
-      flex-shrink: 0;
-    }
-    .app-avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* ── Bottom Tab Bar ── */
-    .tab-bar {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-      background: var(--white);
-      box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+    .month-strip {
       display: flex;
-      padding-bottom: env(safe-area-inset-bottom, 0px);
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      min-height: 64px;
+      margin: 0;
+      padding: 12px 18px;
+      background: linear-gradient(135deg, #FFD22E 0%, #FFC400 100%);
+      color: var(--navy);
+      font-size: 20px;
+      font-weight: 800;
+      border-radius: 0 0 20px 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 24px rgba(13,27,62,0.08);
     }
-    .tab-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 8px 4px 6px;
-      cursor: pointer; border: none; background: none;
-      color: var(--gray-400); font-family: inherit;
-      font-size: 10px; font-weight: 600;
-      transition: color 0.2s;
-      gap: 2px;
+    .month-strip::before {
+      content: '📅';
+      position: absolute;
+      left: 16px;
+      bottom: -4px;
+      font-size: 54px;
+      transform: rotate(-12deg);
+      opacity: 0.9;
     }
-    .tab-btn .tab-icon { font-size: 20px; line-height: 1; }
-    .tab-btn.active { color: var(--navy); }
+    .month-strip .chev {
+      color: rgba(13,27,62,0.48);
+      font-size: 30px;
+      line-height: 1;
+      z-index: 1;
+    }
+    .month-strip span { z-index: 1; }
 
-    /* ── Content Area ── */
-    .tab-content {
-      display: none;
-      padding: 14px 14px calc(var(--tab-h) + 14px + env(safe-area-inset-bottom, 0px));
-      min-height: calc(100vh - 56px);
+    /* ===== Form Container ===== */
+    .form-container {
+      padding: 14px 16px 100px;
+      max-width: 500px;
+      margin: 0 auto;
     }
-    .tab-content.active { display: block; }
 
-    /* ── Cards ── */
-    .card {
+    .hero-card {
+      min-height: 156px;
+      background:
+        radial-gradient(circle at 88% 18%, rgba(255,210,46,0.85) 0 18%, transparent 19%),
+        linear-gradient(135deg, #061A3A 0%, #073B82 68%, #0C7BFF 100%);
+      border-radius: 22px;
+      padding: 20px;
+      margin-bottom: 18px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 14px 30px rgba(13,27,62,0.20);
+      color: var(--white);
+    }
+    .hero-card::before,
+    .hero-card::after {
+      content: '';
+      position: absolute;
+      border-radius: 999px;
+      background: rgba(255,210,46,0.16);
+    }
+    .hero-card::before {
+      width: 145px;
+      height: 145px;
+      right: -46px;
+      bottom: -52px;
+    }
+    .hero-card::after {
+      width: 54px;
+      height: 54px;
+      left: 58%;
+      top: 22px;
+      border: 10px solid rgba(255,210,46,0.82);
+      background: rgba(255,210,46,0.22);
+    }
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+      max-width: 58%;
+    }
+    .hero-eyebrow {
+      font-size: 14px;
+      color: #AFC8EA;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hero-title {
+      font-size: 27px;
+      line-height: 1.16;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .hero-title strong {
+      color: #FFD22E;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.13);
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #EAF2FF;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .hero-mascot-wrap {
+      position: absolute;
+      right: 8px;
+      bottom: -5px;
+      width: 148px;
+      height: 148px;
+      z-index: 2;
+    }
+    .hero-mascot-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,0.18));
+    }
+    .coin {
+      position: absolute;
+      z-index: 1;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #FFE07A, #F3B700);
+      box-shadow: inset -4px -5px 0 rgba(139,115,64,0.24), 0 10px 14px rgba(0,0,0,0.12);
+    }
+    .coin::after {
+      content: '✓';
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      color: rgba(13,27,62,0.55);
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .coin.one { right: 126px; top: 40px; transform: rotate(-18deg); }
+    .coin.two { right: 18px; top: 22px; width: 34px; height: 34px; transform: rotate(16deg); }
+
+    /* ===== Section ===== */
+    .section {
       background: var(--white);
-      border-radius: var(--radius);
+      border-radius: 18px;
       box-shadow: var(--shadow);
-      padding: 18px;
-      margin-bottom: 12px;
+      padding: 20px;
+      margin-bottom: 14px;
       border: 1px solid rgba(197,165,90,0.08);
     }
-    .card-title {
-      font-size: 13px; font-weight: 700; color: var(--navy);
-      margin-bottom: 14px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .card-title .ct-icon {
-      width: 26px; height: 26px; border-radius: 8px;
-      background: var(--gold-pale);
-      display: flex; align-items: center; justify-content: center;
+    .section-title {
       font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-
-    /* ── Hero Profile Card ── */
-    .profile-hero {
-      background: linear-gradient(135deg, #061A3A 0%, #073B82 70%, #0C7BFF 100%);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 12px;
-      position: relative; overflow: hidden;
-      box-shadow: 0 14px 30px rgba(13,27,62,0.20);
+    .section-title .icon {
+      width: 28px; height: 28px;
+      background: var(--gold-pale);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
     }
-    .profile-hero::before {
+    .section-title::after {
       content: '';
-      position: absolute; right: -30px; bottom: -40px;
-      width: 130px; height: 130px; border-radius: 50%;
-      background: rgba(255,210,46,0.14);
-    }
-    .profile-hero-row {
-      display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;
-    }
-    .profile-big-avatar {
-      width: 56px; height: 56px; border-radius: 14px;
-      background: rgba(255,255,255,0.15);
-      border: 2px solid rgba(197,165,90,0.5);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 26px; font-weight: 800; color: var(--gold);
-      flex-shrink: 0; overflow: hidden;
-    }
-    .profile-big-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
-    .profile-hero-name { font-size: 18px; font-weight: 800; color: white; }
-    .profile-hero-dept { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
-    .profile-hero-id {
-      display: inline-block; margin-top: 8px;
-      padding: 4px 10px; border-radius: 999px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.18);
-      font-size: 10px; color: rgba(255,255,255,0.75); font-weight: 600;
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold-light), transparent);
     }
 
-    /* ── Balance Cards ── */
-    .balance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .balance-card {
-      border-radius: 14px; padding: 14px 10px;
-      display: flex; flex-direction: column; align-items: center; gap: 4px;
-      text-align: center;
-    }
-    .balance-card .bc-icon { font-size: 22px; }
-    .balance-card .bc-num { font-size: 28px; font-weight: 800; line-height: 1; }
-    .balance-card .bc-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
-    .balance-card .bc-sub { font-size: 10px; margin-top: 2px; }
-    .bc-bar-wrap {
-      width: 100%; height: 5px; border-radius: 3px; overflow: hidden;
-      margin-top: 6px; background: rgba(0,0,0,0.08);
-    }
-    .bc-bar { height: 100%; border-radius: 3px; transition: width 0.6s; }
-
-    /* ── Leave History Items ── */
-    .leave-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--gray-100);
-    }
-    .leave-item:last-child { border-bottom: none; padding-bottom: 0; }
-    .leave-type-icon {
-      width: 40px; height: 40px; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px; flex-shrink: 0;
-    }
-    .leave-item-info { flex: 1; min-width: 0; }
-    .leave-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .leave-item-type { font-size: 14px; font-weight: 700; color: var(--navy); }
-    .status-pill {
-      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    .status-pill.approved { background: var(--green-bg); color: var(--green); }
-    .status-pill.pending  { background: var(--orange-bg); color: var(--orange); }
-    .status-pill.rejected { background: var(--red-bg); color: var(--red); }
-    .leave-item-date { font-size: 12px; color: var(--gray-600); margin-top: 3px; }
-    .leave-item-days { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
-
-    /* ── Profile Edit Fields ── */
-    .field { margin-bottom: 14px; }
+    /* ===== Field ===== */
+    .field { margin-bottom: 16px; }
     .field:last-child { margin-bottom: 0; }
-    label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; }
-    .field-input {
-      width: 100%; padding: 12px 14px;
-      border: 1.5px solid var(--gray-200); border-radius: 12px;
-      font-size: 14px; font-family: inherit; color: var(--gray-800);
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: 6px;
+    }
+    label .req { color: var(--red); margin-left: 3px; font-size: 11px; }
+    label .opt { color: var(--gray-400); margin-left: 4px; font-size: 11px; font-weight: 400; }
+
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: 16px;
+      font-size: 15px;
+      font-family: inherit;
+      color: var(--gray-800);
       background: var(--gray-50);
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      appearance: none;
+      -webkit-appearance: none;
     }
-    .field-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(197,165,90,0.15); background: var(--white); }
-    .field-input[readonly] { color: var(--gray-400); background: var(--gray-100); cursor: not-allowed; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.15);
+      background: var(--white);
+    }
+    input.error, select.error, textarea.error {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(192,57,43,0.1);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236B7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 40px;
+    }
+    textarea { resize: vertical; min-height: 80px; }
 
-    /* ── Buttons ── */
-    .btn-primary {
-      width: 100%; padding: 14px;
+    /* ===== Date Row ===== */
+    .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* ===== Day Badge ===== */
+    .day-badge {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: linear-gradient(135deg, var(--gold-pale), var(--gold-light));
+      border: 1px solid rgba(197,165,90,0.2);
+      border-radius: 16px;
+      margin-top: 10px;
+    }
+    .day-badge .count {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+    }
+    .day-badge .label { font-size: 13px; color: var(--gray-600); font-weight: 600; }
+    .day-badge .sublabel { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+    .day-badge.warn {
+      background: linear-gradient(135deg, #FEF6E3, #FEF0D0);
+      border-color: rgba(212,136,15,0.3);
+    }
+    .day-badge.warn .count { color: var(--orange); }
+    .day-badge.hidden { display: none; }
+
+    .period-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .period-card {
+      padding: 12px 8px;
+      border: 2px solid var(--gray-200);
+      border-radius: 16px;
+      background: var(--white);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+    .period-card.selected {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+      color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.12);
+    }
+
+    /* ===== Leave Type Grid ===== */
+    .type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+    .type-card {
+      padding: 14px 8px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--white);
+    }
+    .type-card.selected {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.12);
+    }
+    .type-card:active { transform: scale(0.96); }
+    .type-card .icon { font-size: 26px; display: block; margin-bottom: 4px; }
+    .type-card .name { font-size: 12px; font-weight: 600; color: var(--gray-800); }
+    .type-card.selected .name { color: var(--navy); }
+
+    /* ===== File Upload ===== */
+    .upload-area {
+      border: 2px dashed var(--gray-200);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--gray-50);
+    }
+    .upload-area:hover, .upload-area:active {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+    }
+    .upload-area .icon { font-size: 28px; margin-bottom: 8px; }
+    .upload-area p { font-size: 13px; color: var(--gray-600); }
+    .upload-name { font-size: 13px; color: var(--green); margin-top: 8px; display: none; font-weight: 600; }
+    #fileInput { display: none; }
+
+    /* ===== Submit Bar ===== */
+    .submit-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 14px 16px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+      background: var(--white);
+      box-shadow: 0 -4px 24px rgba(0,0,0,0.08);
+      z-index: 100;
+    }
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
       background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-      color: white; border: none; border-radius: 12px;
-      font-size: 15px; font-weight: 700; font-family: inherit;
-      cursor: pointer; transition: opacity 0.2s;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.15);
     }
-    .btn-primary:active { opacity: 0.85; }
-    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
+    .btn-submit:active { transform: scale(0.98); filter: brightness(0.95); }
+    .btn-submit:disabled { background: var(--gray-400); cursor: not-allowed; text-shadow: none; }
+    .btn-submit.loading { background: var(--gray-400); }
 
-    .btn-navy {
-      width: 100%; padding: 14px;
-      background: var(--navy);
-      color: var(--gold); border: none; border-radius: 12px;
-      font-size: 15px; font-weight: 700; font-family: inherit;
-      cursor: pointer; transition: opacity 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
+    /* ===== Spinner ===== */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
     }
-    .btn-navy:active { opacity: 0.85; }
-
-    /* ── HR Dashboard ── */
-    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .stat-box {
-      border-radius: 14px; padding: 16px;
-      display: flex; flex-direction: column;
-    }
-    .stat-box .sb-label { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
-    .stat-box .sb-num { font-size: 30px; font-weight: 800; line-height: 1; }
-    .stat-box .sb-sub { font-size: 11px; margin-top: 4px; }
-
-    .hr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .hr-table th { background: var(--navy); color: var(--gold); padding: 8px; text-align: left; font-weight: 700; }
-    .hr-table td { padding: 8px; border-bottom: 1px solid var(--gray-100); }
-    .hr-table tr:last-child td { border-bottom: none; }
-
-    /* ── Empty State ── */
-    .empty-state {
-      text-align: center; padding: 48px 24px;
-      color: var(--gray-400);
-    }
-    .empty-state .es-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty-state .es-title { font-size: 15px; font-weight: 700; color: var(--gray-600); margin-bottom: 6px; }
-    .empty-state .es-sub { font-size: 13px; }
-
-    /* ── Toast ── */
-    .toast {
-      position: fixed; bottom: calc(var(--tab-h) + 12px); left: 14px; right: 14px;
-      background: var(--navy); color: white;
-      padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600;
-      z-index: 9000; opacity: 0; transform: translateY(12px);
-      transition: all 0.3s; pointer-events: none;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-
+    .btn-submit.loading .spinner { display: block; }
+    .btn-submit.loading .btn-text { display: none; }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Success Screen ===== */
+    .success-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px 24px;
+      text-align: center;
+      background: linear-gradient(180deg, var(--navy) 0%, var(--royal-blue) 40%, var(--gray-50) 40%);
+    }
+    .success-screen.show { display: flex; }
+    .success-icon {
+      width: 96px; height: 96px;
+      background: var(--green);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 48px;
+      margin-bottom: 24px;
+      animation: pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 8px 32px rgba(45,139,78,0.3);
+    }
+    @keyframes pop { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .success-card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px 24px;
+      max-width: 360px;
+      width: 100%;
+    }
+    .success-title { font-size: 22px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+    .success-sub { font-size: 14px; color: var(--gray-600); margin-bottom: 20px; line-height: 1.6; }
+    .leave-id-badge {
+      background: var(--gold-pale);
+      border: 1px solid rgba(197,165,90,0.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--navy);
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+      display: inline-block;
+    }
+    .btn-close {
+      padding: 14px 40px;
+      background: linear-gradient(135deg, var(--navy), var(--royal-blue));
+      color: var(--gold);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* ===== Error Toast ===== */
+    .toast {
+      position: fixed;
+      bottom: 90px; left: 16px; right: 16px;
+      background: var(--red);
+      color: white;
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 200;
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(192,57,43,0.3);
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ===== Loading overlay ===== */
+    .init-loading {
+      position: fixed; inset: 0;
+      background: linear-gradient(135deg, var(--navy), var(--royal-blue));
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: white; z-index: 999;
+    }
+    .init-loading .mascot { font-size: 56px; margin-bottom: 16px; }
+    .init-loading .title { font-size: 20px; font-weight: 800; color: var(--gold); }
+    .init-loading .sub { font-size: 13px; color: #8899BB; margin-top: 6px; }
+    .init-loading .dot {
+      display: flex; gap: 8px; margin-top: 24px;
+    }
+    .init-loading .dot span {
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .init-loading .dot span:nth-child(2) { animation-delay: 0.2s; }
+    .init-loading .dot span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.3);opacity:1} }
+
+    /* ===== Misc ===== */
+    .info-note {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--gold-pale);
+      border-radius: 8px;
+      border-left: 3px solid var(--gold);
+      margin-top: 12px;
+    }
+    .info-note .note-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+    .info-note .note-text { font-size: 12px; color: var(--gray-600); line-height: 1.5; }
+    .employee-summary {
+      display: none;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--white);
+      border: 1px solid rgba(197,165,90,0.28);
+      border-radius: 8px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 14px;
+    }
+    .employee-summary.show { display: flex; }
+    .employee-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: var(--navy);
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+    .employee-summary .name { color: var(--navy); font-weight: 800; font-size: 15px; line-height: 1.3; }
+    .employee-summary .dept { color: var(--gray-600); font-size: 12px; line-height: 1.4; margin-top: 2px; }
+    .section.hidden { display: none; }
   </style>
 </head>
 <body>
 
-<!-- Init Loading -->
-<div id="initLoading">
+<!-- Loading Screen -->
+<div class="init-loading" id="initLoading">
   <div class="mascot">🦙</div>
   <div class="title">ระบบลาออนไลน์</div>
-  <div class="sub">กำลังโหลด...</div>
-  <div class="dots"><span></span><span></span><span></span></div>
+  <div class="sub">กำลังเตรียมแบบฟอร์ม...</div>
+  <div class="dot"><span></span><span></span><span></span></div>
 </div>
 
-<!-- App -->
-<div id="app">
-  <!-- Top Header -->
-  <div class="app-header">
-    <div class="app-header-inner">
-      <div class="app-logo">
-        <span class="alpaca">🦙</span>
-        <div class="title-wrap">
-          <div class="org">มหาวิทยาลัยธรรมศาสตร์</div>
-          <div class="sys">ระบบลาออนไลน์</div>
+<!-- Main Form -->
+<div id="mainForm" style="display:none">
+  <div class="month-strip">
+    <span class="chev">‹</span>
+    <span id="monthTitle">เดือนนี้</span>
+    <span class="chev">›</span>
+  </div>
+
+  <div class="form-container">
+    <div class="hero-card">
+      <div class="coin one"></div>
+      <div class="coin two"></div>
+      <div class="hero-copy">
+        <div class="hero-eyebrow">ยินดีต้อนรับกลับมา</div>
+        <div class="hero-title">ยื่นใบลา<br><strong>ออนไลน์</strong></div>
+        <div class="hero-pill">ระบบแจ้งหัวหน้าทันที</div>
+      </div>
+      <div class="hero-mascot-wrap">
+        <img id="heroMascot" alt="ตัวการ์ตูนระบบลา">
+      </div>
+    </div>
+
+    <!-- ข้อมูลผู้ลา -->
+    <div class="employee-summary" id="employeeSummary">
+      <div class="employee-avatar" id="employeeAvatar">👤</div>
+      <div>
+        <div class="name" id="employeeSummaryName">—</div>
+        <div class="dept" id="employeeSummaryDept">—</div>
+      </div>
+    </div>
+
+    <div class="section" id="employeeInputSection">
+      <div class="section-title">
+        <span class="icon">👤</span> ข้อมูลผู้ลา
+      </div>
+      <div class="field">
+        <label>ชื่อ-นามสกุล <span class="req">*</span></label>
+        <input type="text" id="name" placeholder="เช่น นางสาวสมใจ ใจดี" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>แผนก / ส่วนงาน <span class="req">*</span></label>
+        <input type="text" id="department" placeholder="เช่น สำนักงานคณบดี">
+      </div>
+    </div>
+
+    <!-- ประเภทการลา -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📋</span> ประเภทการลา <span class="req" style="margin-left:4px">*</span>
+      </div>
+      <div class="type-grid" id="typeGrid">
+        <div class="type-card" data-value="ลาพักร้อน">
+          <span class="icon">🏖️</span><span class="name">ลาพักร้อน</span>
+        </div>
+        <div class="type-card" data-value="ลากิจ">
+          <span class="icon">🏠</span><span class="name">ลากิจ</span>
+        </div>
+        <div class="type-card" data-value="ลาป่วย">
+          <span class="icon">🏥</span><span class="name">ลาป่วย</span>
+        </div>
+        <div class="type-card" data-value="ลาคลอด">
+          <span class="icon">👶</span><span class="name">ลาคลอด</span>
+        </div>
+        <div class="type-card" data-value="ลาบวช">
+          <span class="icon">🙏</span><span class="name">ลาบวช</span>
+        </div>
+        <div class="type-card" data-value="ลาอื่นๆ">
+          <span class="icon">📄</span><span class="name">อื่น ๆ</span>
         </div>
       </div>
-      <div class="app-avatar" id="avatarEl">👤</div>
+      <input type="hidden" id="leaveType">
     </div>
-  </div>
 
-  <!-- Tab Contents -->
-  <div id="tab-submit" class="tab-content active">
-    <!-- filled by JS -->
-  </div>
+    <!-- ระยะเวลาลา -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📅</span> ระยะเวลาลา
+      </div>
+      <div class="date-row">
+        <div class="field">
+          <label>วันที่เริ่มลา <span class="req">*</span></label>
+          <input type="date" id="startDate">
+        </div>
+        <div class="field">
+          <label>วันที่สิ้นสุด <span class="req">*</span></label>
+          <input type="date" id="endDate">
+        </div>
+      </div>
+      <div class="day-badge hidden" id="dayBadge">
+        <span class="count" id="dayCount">0</span>
+        <div>
+          <div class="label">วันทำการที่ลา</div>
+          <div class="sublabel" id="dateRangeText"></div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>ช่วงเวลา <span class="req">*</span></label>
+        <div class="period-grid" id="periodGrid">
+          <div class="period-card selected" data-value="เต็มวัน">เต็มวัน</div>
+          <div class="period-card" data-value="ครึ่งวันเช้า">เช้า</div>
+          <div class="period-card" data-value="ครึ่งวันบ่าย">บ่าย</div>
+        </div>
+      </div>
+    </div>
 
-  <div id="tab-history" class="tab-content">
-    <div id="historyContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
-  </div>
+    <!-- รายละเอียด -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon">📝</span> รายละเอียด
+      </div>
+      <div class="field">
+        <label>เหตุผลการลา <span class="opt">(ไม่บังคับ)</span></label>
+        <textarea id="reason" placeholder="ระบุเหตุผลการลาโดยย่อ (ถ้ามี)..." rows="3"></textarea>
+      </div>
+      <div class="field">
+        <label>เอกสารแนบ <span class="opt">(ถ้ามี)</span></label>
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+          <div class="icon">📎</div>
+          <p>แตะเพื่อแนบไฟล์<br><small style="color:#9CA3AF">PDF, JPG, PNG (ไม่เกิน 5MB)</small></p>
+        </div>
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png">
+        <div class="upload-name" id="uploadName">📎 <span id="fileName"></span></div>
+      </div>
 
-  <div id="tab-balance" class="tab-content">
-    <div id="balanceContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
-  </div>
+      <div class="info-note">
+        <span class="note-icon">💡</span>
+        <span class="note-text">ลาป่วยเกิน 3 วัน ต้องแนบใบรับรองแพทย์ด้วยนะคะ</span>
+      </div>
+    </div>
 
-  <div id="tab-profile" class="tab-content">
-    <div id="profileContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
-  </div>
+  </div><!-- /form-container -->
 
-  <div id="tab-hr" class="tab-content">
-    <div id="hrContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
-  </div>
-
-  <!-- Bottom Tab Bar -->
-  <div class="tab-bar" id="tabBar">
-    <button class="tab-btn active" data-tab="submit" onclick="switchTab('submit')">
-      <span class="tab-icon">📋</span>ยื่นใบลา
-    </button>
-    <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
-      <span class="tab-icon">📜</span>ประวัติ
-    </button>
-    <button class="tab-btn" data-tab="balance" onclick="switchTab('balance')">
-      <span class="tab-icon">📅</span>วันลา
-    </button>
-    <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
-      <span class="tab-icon">👤</span>โปรไฟล์
-    </button>
-    <button class="tab-btn" data-tab="hr" id="hrTabBtn" style="display:none" onclick="switchTab('hr')">
-      <span class="tab-icon">📊</span>HR
+  <!-- Submit Bar -->
+  <div class="submit-bar">
+    <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+      <span class="btn-text">🦙 ส่งคำขอลา</span>
+      <div class="spinner"></div>
     </button>
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- Success Screen -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">✅</div>
+  <div class="success-card">
+    <div class="success-title">ส่งใบลาสำเร็จ!</div>
+    <div class="success-sub">🦙 ลาจะแจ้งผลทาง LINE ทันที<br>เมื่อหัวหน้าดำเนินการแล้วค่ะ</div>
+    <div class="leave-id-badge" id="leaveIdDisplay">—</div>
+    <br>
+    <button class="btn-close" onclick="closeLIFF()">ปิดหน้าต่าง</button>
+  </div>
+</div>
+
+<!-- Toast Error -->
+<div class="toast" id="toast">⚠️ <span id="toastMsg"></span></div>
 
 <script>
-const GAS_URL  = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
-const LIFF_ID  = '2010068016-uNZ0EWnx';
-const LIFF_FORM_URL = `https://liff.line.me/${LIFF_ID}`;
+// ===== Config =====
+const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
+const LIFF_ID         = '2010068016-uNZ0EWnx';
+const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1v5BgJvcOQH7k2AN_3hj3tsSQOxG3DLjL/view?usp=share_link';
 
-let userId    = '';
-let userProfile = null;
-let employee  = null;
-let isHr      = false;
-let tabLoaded = { submit: false, history: false, balance: false, profile: false, hr: false };
-let currentTab = 'submit';
+let lineUserId     = '';
+let selectedType   = '';
+let uploadedFileB64 = '';
+let selectedPeriod = 'เต็มวัน';
+let registeredEmployee = null;
 
-// ── Tab Switching ──
-function switchTab(name) {
-  document.querySelectorAll('.tab-content').forEach(el => {
-    el.classList.remove('active');
-    el.style.display = '';
-  });
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  const content = document.getElementById('tab-' + name);
-  if (content) content.classList.add('active');
-  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
-  if (btn) btn.classList.add('active');
-  currentTab = name;
-  if (!tabLoaded[name]) {
-    loadTab(name);
-    tabLoaded[name] = true;
+const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs>
+    <linearGradient id="shirt" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0D1B3E"/>
+      <stop offset="1" stop-color="#1E3A6E"/>
+    </linearGradient>
+  </defs>
+  <circle cx="91" cy="90" r="70" fill="#FFD22E"/>
+  <circle cx="42" cy="36" r="18" fill="#F5E6C8"/>
+  <circle cx="139" cy="42" r="16" fill="#F5E6C8"/>
+  <path d="M36 74c4-34 31-56 63-52 29 4 49 27 48 58 13 7 21 21 19 37-3 29-31 49-74 49-45 0-75-20-78-49-2-18 6-34 22-43z" fill="#F4D7B5"/>
+  <path d="M44 78c9-34 36-54 70-47 16 3 29 12 38 26-15-2-27 1-37 9-15-15-35-14-71 12z" fill="#0D1B3E"/>
+  <path d="M61 103c10 13 48 14 61 0" fill="none" stroke="#7A4B35" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="67" cy="84" r="18" fill="#fff"/>
+  <circle cx="115" cy="84" r="18" fill="#fff"/>
+  <circle cx="69" cy="86" r="8" fill="#172033"/>
+  <circle cx="113" cy="86" r="8" fill="#172033"/>
+  <path d="M84 88h14" stroke="#7A4B35" stroke-width="4" stroke-linecap="round"/>
+  <path d="M49 82c15-8 27-8 38 0M96 82c15-8 28-8 39 0" stroke="#172033" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M41 132c17-17 84-17 101 0l8 42H32l9-42z" fill="url(#shirt)"/>
+  <path d="M89 123l-10 51h24l-9-51z" fill="#fff"/>
+  <path d="M143 128c14-7 23-2 26 9 4 13-4 22-18 21" fill="#F4D7B5"/>
+  <path d="M154 123v36" stroke="#F4D7B5" stroke-width="14" stroke-linecap="round"/>
+  <path d="M153 119c8-5 18 3 11 12" stroke="#7A4B35" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M66 39h54l15 24H51l15-24z" fill="#1E3A6E"/>
+  <path d="M75 52h35" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="150" cy="34" r="6" fill="#fff"/>
+  <path d="M28 35l5 10 10 5-10 5-5 10-5-10-10-5 10-5 5-10z" fill="#fff"/>
+</svg>`;
+
+function initDecorations() {
+  document.getElementById('monthTitle').textContent = getThaiMonthYear(new Date());
+  const mascot = document.getElementById('heroMascot');
+  const fallbackMascot = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(DEFAULT_MASCOT_SVG)}`;
+  mascot.onerror = () => {
+    mascot.onerror = null;
+    mascot.src = fallbackMascot;
+  };
+  mascot.src = getDirectImageUrl(MASCOT_IMAGE_URL) || fallbackMascot;
+}
+
+function getDirectImageUrl(url) {
+  if (!url) return '';
+  const driveMatch = String(url).match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w600`;
   }
+
+  const driveOpenMatch = String(url).match(/[?&]id=([^&]+)/);
+  if (String(url).includes('drive.google.com') && driveOpenMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveOpenMatch[1]}&sz=w600`;
+  }
+
+  return url;
 }
 
-function loadTab(name) {
-  if (name === 'submit')  renderSubmit();
-  if (name === 'history') loadHistory();
-  if (name === 'balance') renderBalance();
-  if (name === 'profile') renderProfile();
-  if (name === 'hr')      loadHr();
-}
-
-// ── Init ──
-async function init() {
+// ===== LIFF Init =====
+async function initLIFF() {
+  initDecorations();
   try {
     await liff.init({ liffId: LIFF_ID });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    const profile = await liff.getProfile();
-    userId = profile.userId;
-    userProfile = profile;
-  } catch (err) {
-    userId = new URLSearchParams(location.search).get('userId') || 'TEST_USER';
-  }
 
-  // set avatar
-  if (userProfile && userProfile.pictureUrl) {
-    document.getElementById('avatarEl').innerHTML =
-      `<img src="${userProfile.pictureUrl}" alt="">`;
-  } else if (userProfile && userProfile.displayName) {
-    document.getElementById('avatarEl').textContent = userProfile.displayName.charAt(0);
-  }
-
-  // load employee data
-  try {
-    const r = await fetch(`${GAS_URL}?mode=api&action=employee&userId=${encodeURIComponent(userId)}`);
-    const d = await r.json();
-    if (d.found) employee = d.employee;
-  } catch (e) {}
-
-  // HR check — ใช้ค่า isHr จาก API
-  isHr = !!(employee && employee.isHr);
-  if (isHr) {
-    document.getElementById('hrTabBtn').style.display = 'flex';
-  }
-
-  // Show app
-  document.getElementById('initLoading').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-
-  // Load first tab
-  tabLoaded.submit = true;
-  renderSubmit();
-}
-
-// ═══════════════════════════════════════════
-// TAB: ยื่นใบลา
-// ═══════════════════════════════════════════
-function renderSubmit() {
-  const el = document.getElementById('tab-submit');
-
-  if (employee) {
-    el.innerHTML = `
-      <div class="profile-hero" style="margin-bottom:14px">
-        <div class="profile-hero-row">
-          <div class="profile-big-avatar">${(employee.name||'ผ').charAt(0)}</div>
-          <div class="profile-hero-info">
-            <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
-            <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
-            <div class="profile-hero-id">📋 ยินดีต้อนรับ</div>
-          </div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📋</span>ยื่นใบลา</div>
-        <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
-          กดปุ่มด้านล่างเพื่อกรอกแบบฟอร์มยื่นใบลา<br>
-          ระบบจะแจ้งหัวหน้าทันทีหลังส่งคำขอ
-        </p>
-        ${renderBalanceMiniCards()}
-        <div style="height:14px"></div>
-        <button class="btn-navy" onclick="openLIFFForm()">
-          <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
-        </button>
-      </div>`;
-  } else {
-    el.innerHTML = `
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📋</span>ยื่นใบลา</div>
-        <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
-          กดปุ่มด้านล่างเพื่อกรอกแบบฟอร์มยื่นใบลา<br>
-          ระบบจะแจ้งหัวหน้าทันทีหลังส่งคำขอ
-        </p>
-        <button class="btn-navy" onclick="openLIFFForm()">
-          <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
-        </button>
-      </div>`;
-  }
-}
-
-function renderBalanceMiniCards() {
-  if (!employee) return '';
-  const items = [
-    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF' },
-    { icon:'🏠',  label:'ลากิจ',   val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
-    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4' },
-  ];
-  return `<div class="balance-grid">${items.map(it => {
-    const pct = Math.min(100, Math.round((it.val/it.max)*100));
-    return `<div class="balance-card" style="background:${it.bg}">
-      <span class="bc-icon">${it.icon}</span>
-      <span class="bc-num" style="color:${it.color}">${it.val}</span>
-      <span class="bc-label" style="color:${it.color}">${it.label}</span>
-      <div class="bc-bar-wrap"><div class="bc-bar" style="width:${pct}%;background:${it.color}"></div></div>
-    </div>`;
-  }).join('')}</div>`;
-}
-
-function openLIFFForm() {
-  const url = userId ? `${LIFF_FORM_URL}?userId=${encodeURIComponent(userId)}` : LIFF_FORM_URL;
-  if (typeof liff !== 'undefined' && liff.isInClient()) {
-    liff.openWindow({ url, external: false });
-  } else {
-    window.open(url, '_blank');
-  }
-}
-
-// ═══════════════════════════════════════════
-// TAB: ประวัติ
-// ═══════════════════════════════════════════
-async function loadHistory() {
-  const el = document.getElementById('historyContent');
-  el.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div>';
-  try {
-    const r = await fetch(`${GAS_URL}?mode=api&action=my_leaves&userId=${encodeURIComponent(userId)}&limit=30`);
-    const d = await r.json();
-    if (!d.leaves || d.leaves.length === 0) {
-      el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ยังไม่มีประวัติการลา</div><div class="es-sub">พิมพ์ "ลา" ใน LINE หรือกดแท็บยื่นใบลา</div></div>`;
+    if (!liff.isLoggedIn()) {
+      liff.login();
       return;
     }
-    el.innerHTML = `<div class="card"><div class="card-title"><span class="ct-icon">📜</span>ประวัติการลา ${d.leaves.length} รายการ</div>${d.leaves.map(renderLeaveItem).join('')}</div>`;
-  } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div><div class="es-sub">กรุณาลองใหม่อีกครั้ง</div></div>`;
+
+    const profile = await liff.getProfile();
+    lineUserId    = profile.userId;
+
+    // Default dates = today
+    const today    = new Date();
+    const todayStr = toDateStr(today);
+    document.getElementById('startDate').value = todayStr;
+    document.getElementById('endDate').value   = todayStr;
+    calcDays();
+
+    // Show form
+    document.getElementById('initLoading').style.display = 'none';
+    document.getElementById('mainForm').style.display    = 'block';
+
+    // Fallback userId from query param
+    if (!lineUserId) {
+      const params = new URLSearchParams(window.location.search);
+      lineUserId   = params.get('userId') || '';
+    }
+
+    await prefillRegisteredEmployee(profile.displayName);
+
+  } catch (err) {
+    console.error('LIFF init error:', err);
+    // Browser testing fallback
+    lineUserId = new URLSearchParams(window.location.search).get('userId') || 'TEST_USER';
+    document.getElementById('initLoading').style.display = 'none';
+    document.getElementById('mainForm').style.display    = 'block';
+
+    const today = toDateStr(new Date());
+    document.getElementById('startDate').value = today;
+    document.getElementById('endDate').value   = today;
+    calcDays();
+    await prefillRegisteredEmployee('');
   }
 }
 
-function renderLeaveItem(leave) {
-  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
-  const icon = typeIcons[leave.leaveType] || '📄';
-  const typeBg = { 'ลาพักร้อน':'#EFF6FF','ลากิจ':'#F0FDFA','ลาป่วย':'#F0FDF4','ลาคลอด':'#FDF4FF','ลาบวช':'#FFF7ED' };
-  const bg = typeBg[leave.leaveType] || '#F3F4F6';
+async function prefillRegisteredEmployee(fallbackName) {
+  if (!lineUserId) return;
+  try {
+    const res = await fetch(`${GAS_WEB_APP_URL}?mode=api&action=employee&userId=${encodeURIComponent(lineUserId)}`);
+    const data = await res.json();
+    if (data.found && data.employee) {
+      registeredEmployee = data.employee;
+      document.getElementById('name').value = registeredEmployee.name || '';
+      document.getElementById('department').value = registeredEmployee.department || '';
+      showRegisteredEmployeeSummary(registeredEmployee);
+      return;
+    }
+  } catch (err) {
+    console.warn('Cannot load registered employee:', err);
+  }
 
-  let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
-  if (leave.status === 'อนุมัติ')    { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
-  if (leave.status === 'ไม่อนุมัติ') { statusClass = 'rejected'; statusText = '❌ ไม่อนุมัติ'; }
-
-  const days = Number(leave.days) || 0;
-  const dayText = leave.period === 'เต็มวัน' || !leave.period
-    ? `${days} วันทำการ`
-    : `${leave.period} (0.5 วัน)`;
-
-  return `<div class="leave-item">
-    <div class="leave-type-icon" style="background:${bg}">${icon}</div>
-    <div class="leave-item-info">
-      <div class="leave-item-top">
-        <div class="leave-item-type">${leave.leaveType||'ไม่ระบุ'}</div>
-        <div class="status-pill ${statusClass}">${statusText}</div>
-      </div>
-      <div class="leave-item-date">📅 ${leave.startDate}${leave.endDate && leave.endDate !== leave.startDate ? ' — ' + leave.endDate : ''}</div>
-      <div class="leave-item-days">⏱ ${dayText}${leave.remark ? ' · ' + leave.remark : ''}</div>
-    </div>
-  </div>`;
+  if (fallbackName && !document.getElementById('name').value) {
+    document.getElementById('name').value = fallbackName;
+  }
 }
 
-// ═══════════════════════════════════════════
-// TAB: วันลาคงเหลือ
-// ═══════════════════════════════════════════
-function renderBalance() {
-  const el = document.getElementById('balanceContent');
-  if (!employee) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ไม่พบข้อมูลพนักงาน</div><div class="es-sub">กรุณาลงทะเบียนในระบบก่อน<br>พิมพ์ "ลงทะเบียน" ใน LINE</div></div>`;
+function showRegisteredEmployeeSummary(emp) {
+  document.getElementById('employeeInputSection').classList.add('hidden');
+  document.getElementById('employeeSummary').classList.add('show');
+  document.getElementById('employeeSummaryName').textContent = emp.name || 'ไม่ระบุชื่อ';
+  document.getElementById('employeeSummaryDept').textContent = emp.department || 'ไม่ระบุแผนก';
+  document.getElementById('employeeAvatar').textContent = (emp.name || 'ผ').trim().charAt(0);
+}
+
+// ===== Leave Type Selection =====
+document.getElementById('typeGrid').addEventListener('click', e => {
+  const card = e.target.closest('.type-card');
+  if (!card) return;
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedType = card.dataset.value;
+  document.getElementById('leaveType').value = selectedType;
+});
+
+document.getElementById('periodGrid').addEventListener('click', e => {
+  const card = e.target.closest('.period-card');
+  if (!card) return;
+  document.querySelectorAll('.period-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedPeriod = card.dataset.value;
+  calcDays();
+});
+
+// ===== Calculate Working Days =====
+function calcDays() {
+  const s = document.getElementById('startDate').value;
+  const e = document.getElementById('endDate').value;
+  if (!s || !e) return;
+
+  const start = new Date(s);
+  const end   = new Date(e);
+  if (end < start) {
+    document.getElementById('endDate').value = s;
+    return calcDays();
+  }
+
+  let days = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dow = cur.getDay();
+    if (dow !== 0 && dow !== 6) days++;
+    cur.setDate(cur.getDate() + 1);
+  }
+
+  if (selectedPeriod !== 'เต็มวัน') {
+    if (toDateStr(start) !== toDateStr(end)) {
+      selectedPeriod = 'เต็มวัน';
+      document.querySelectorAll('.period-card').forEach(c => c.classList.toggle('selected', c.dataset.value === 'เต็มวัน'));
+    } else {
+      days = days > 0 ? 0.5 : 0;
+    }
+  }
+
+  const badge = document.getElementById('dayBadge');
+  badge.classList.remove('hidden', 'warn');
+  if (days >= 5) badge.classList.add('warn');
+  document.getElementById('dayCount').textContent = days;
+  document.getElementById('dateRangeText').textContent =
+    `${formatThai(start)} — ${formatThai(end)}`;
+}
+
+document.getElementById('startDate').addEventListener('change', calcDays);
+document.getElementById('endDate').addEventListener('change', calcDays);
+
+// ===== File Upload =====
+document.getElementById('fileInput').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('ไฟล์มีขนาดเกิน 5MB');
+    this.value = '';
     return;
   }
-  const types = [
-    { icon:'🏖️', label:'ลาพักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF', darkColor:'#1D4ED8' },
-    { icon:'🏠',  label:'ลากิจ',     val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA', darkColor:'#0F766E' },
-    { icon:'🏥',  label:'ลาป่วย',    val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4', darkColor:'#15803D' },
-  ];
-  el.innerHTML = `
-    <div class="profile-hero">
-      <div class="profile-hero-row">
-        <div class="profile-big-avatar">${(employee.name||'ผ').charAt(0)}</div>
-        <div class="profile-hero-info">
-          <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
-          <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
-          <div class="profile-hero-id">🗓 วันลาคงเหลือ ปี ${new Date().getFullYear()+543}</div>
-        </div>
-      </div>
-    </div>
-    ${types.map(it => renderBalanceDetailCard(it)).join('')}`;
+  document.getElementById('fileName').textContent     = file.name;
+  document.getElementById('uploadName').style.display = 'block';
+
+  const reader = new FileReader();
+  reader.onload  = r => { uploadedFileB64 = r.result; };
+  reader.readAsDataURL(file);
+});
+
+// ===== Validate — เหตุผลไม่บังคับแล้ว =====
+function validate() {
+  let ok = true;
+
+  // Required fields (ไม่รวม reason)
+  const requiredFields = ['name', 'department', 'startDate', 'endDate'];
+  requiredFields.forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('error');
+    if (!el.value.trim()) { el.classList.add('error'); ok = false; }
+  });
+
+  if (!ok) {
+    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ');
+  }
+
+  if (!selectedType) {
+    showToast('กรุณาเลือกประเภทการลา');
+    ok = false;
+  }
+
+  const start = new Date(document.getElementById('startDate').value);
+  const end   = new Date(document.getElementById('endDate').value);
+  if (end < start) {
+    document.getElementById('endDate').classList.add('error');
+    showToast('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม');
+    ok = false;
+  }
+  return ok;
 }
 
-function renderBalanceDetailCard(it) {
-  const pct = it.max > 0 ? Math.min(100, Math.round((it.val/it.max)*100)) : 0;
-  const used = it.max - it.val;
-  return `<div class="card" style="border-left:4px solid ${it.color}">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-      <div style="font-size:28px">${it.icon}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--navy)">${it.label}</div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:2px">ใช้ไปแล้ว ${used} วัน จากทั้งหมด ${it.max} วัน</div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:32px;font-weight:800;color:${it.color};line-height:1">${it.val}</div>
-        <div style="font-size:11px;color:var(--gray-400)">วันคงเหลือ</div>
-      </div>
-    </div>
-    <div style="background:#E5E7EB;border-radius:6px;height:8px;overflow:hidden">
-      <div style="height:100%;width:${pct}%;background:${it.color};border-radius:6px;transition:width 0.6s"></div>
-    </div>
-    <div style="display:flex;justify-content:space-between;margin-top:4px">
-      <span style="font-size:10px;color:var(--gray-400)">0</span>
-      <span style="font-size:10px;color:${it.color};font-weight:700">${pct}% คงเหลือ</span>
-      <span style="font-size:10px;color:var(--gray-400)">${it.max}</span>
-    </div>
-  </div>`;
-}
+// ===== Submit =====
+async function submitForm() {
+  if (!validate()) return;
 
-// ═══════════════════════════════════════════
-// TAB: โปรไฟล์
-// ═══════════════════════════════════════════
-function renderProfile() {
-  const el = document.getElementById('profileContent');
-  const emp = employee || {};
-  el.innerHTML = `
-    <div class="profile-hero">
-      <div class="profile-hero-row">
-        <div class="profile-big-avatar">${userProfile && userProfile.pictureUrl
-          ? `<img src="${userProfile.pictureUrl}" alt="">`
-          : (emp.name||'ผ').charAt(0)}</div>
-        <div class="profile-hero-info">
-          <div class="profile-hero-name">${emp.name||userProfile&&userProfile.displayName||'ไม่ระบุชื่อ'}</div>
-          <div class="profile-hero-dept">${emp.department||'ไม่ระบุแผนก'}</div>
-          <div class="profile-hero-id">รหัส: ${emp.id||'—'}</div>
-        </div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="ct-icon">👤</span>ข้อมูลส่วนตัว</div>
-      <div class="field"><label>ชื่อ-นามสกุล</label><input class="field-input" id="pName" value="${emp.name||''}" placeholder="ชื่อ-นามสกุล"></div>
-      <div class="field"><label>แผนก / ส่วนงาน</label><input class="field-input" id="pDept" value="${emp.department||''}" placeholder="แผนก"></div>
-      <div class="field"><label>อีเมล</label><input class="field-input" id="pEmail" type="email" value="${emp.email||''}" placeholder="อีเมล"></div>
-      <div class="field"><label>เบอร์โทรศัพท์</label><input class="field-input" id="pPhone" value="${emp.phone||''}" placeholder="เบอร์โทร"></div>
-    </div>
-    <div class="card">
-      <div class="card-title"><span class="ct-icon">🔒</span>ข้อมูลระบบ (แก้ไขไม่ได้)</div>
-      <div class="field"><label>LINE User ID</label><input class="field-input" readonly value="${userId||'—'}"></div>
-      <div class="field"><label>รหัสพนักงาน</label><input class="field-input" readonly value="${emp.id||'ยังไม่ได้ลงทะเบียน'}"></div>
-    </div>
-    ${emp.id ? `<button class="btn-primary" onclick="saveProfile()">💾 บันทึกข้อมูล</button>` : `
-    <button class="btn-navy" onclick="openRegister()">📝 ลงทะเบียนในระบบ</button>`}
-    <div style="height:8px"></div>`;
-}
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
 
-async function saveProfile() {
-  const name = document.getElementById('pName').value.trim();
-  const dept = document.getElementById('pDept').value.trim();
-  const email = document.getElementById('pEmail').value.trim();
-  const phone = document.getElementById('pPhone').value.trim();
-  if (!name || !dept) { showToast('⚠️ กรุณากรอกชื่อและแผนก'); return; }
+  const days = Number(document.getElementById('dayCount').textContent) || 1;
 
   const payload = {
-    source: 'liff', action: 'register',
-    userId, name, department: dept, email, phone,
-    employeeId: employee ? employee.id : '',
-    managerUserId: employee ? employee.managerUserId : '',
-    annualLeave: employee ? employee.annualLeave : '',
-    personalLeave: employee ? employee.personalLeave : '',
-    sickLeave: employee ? employee.sickLeave : '',
+    source:     'liff',
+    userId:     lineUserId,
+    name:       document.getElementById('name').value.trim(),
+    department: document.getElementById('department').value.trim(),
+    leaveType:  selectedType,
+    startDate:  formatThai(new Date(document.getElementById('startDate').value)),
+    endDate:    formatThai(new Date(document.getElementById('endDate').value)),
+    days:       days,
+    period:     selectedPeriod,
+    reason:     document.getElementById('reason').value.trim(),  // อาจว่างก็ได้
+    attachment: uploadedFileB64 ? 'มีเอกสารแนบ' : '',
   };
-  try {
-    const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
-    const d = await r.json();
-    if (d.success) {
-      showToast('✅ บันทึกข้อมูลสำเร็จ');
-      if (employee) { employee.name = name; employee.department = dept; employee.email = email; employee.phone = phone; }
-    } else { showToast('❌ ' + (d.message||'บันทึกไม่สำเร็จ')); }
-  } catch (e) { showToast('❌ เชื่อมต่อไม่สำเร็จ'); }
-}
 
-function openRegister() {
-  const url = `${GAS_URL}?mode=register&userId=${encodeURIComponent(userId)}`;
-  if (typeof liff !== 'undefined' && liff.isInClient()) {
-    liff.openWindow({ url, external: true });
-  } else { window.open(url, '_blank'); }
-}
-
-// ═══════════════════════════════════════════
-// TAB: HR Dashboard
-// ═══════════════════════════════════════════
-async function loadHr() {
-  const el = document.getElementById('hrContent');
   try {
-    const r = await fetch(`${GAS_URL}?mode=api&action=dashboard`);
-    const d = await r.json();
-    const s = d.summary || {};
-    el.innerHTML = `
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📊</span>สรุปเดือนนี้ (${s.month||'—'})</div>
-        <div class="stat-grid">
-          <div class="stat-box" style="background:#EFF6FF">
-            <div class="sb-label" style="color:#1D4ED8">📋 ยื่นทั้งหมด</div>
-            <div class="sb-num" style="color:#1D4ED8">${s.total||0}</div>
-            <div class="sb-sub" style="color:#3B82F6">${s.days||0} วันรวม</div>
-          </div>
-          <div class="stat-box" style="background:#F0FDF4">
-            <div class="sb-label" style="color:#15803D">✅ อนุมัติ</div>
-            <div class="sb-num" style="color:#15803D">${s.approved||0}</div>
-            <div class="sb-sub" style="color:#22C55E">รายการ</div>
-          </div>
-          <div class="stat-box" style="background:#FEF6E3">
-            <div class="sb-label" style="color:#D4880F">⏳ รออนุมัติ</div>
-            <div class="sb-num" style="color:#D4880F">${s.pending||0}</div>
-            <div class="sb-sub" style="color:#FBBF24">รายการ</div>
-          </div>
-          <div class="stat-box" style="background:#FEE2E2">
-            <div class="sb-label" style="color:#C0392B">❌ ไม่อนุมัติ</div>
-            <div class="sb-num" style="color:#C0392B">${s.rejected||0}</div>
-            <div class="sb-sub" style="color:#EF4444">รายการ</div>
-          </div>
-        </div>
-      </div>
-      ${s.byType && Object.keys(s.byType).length ? `
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📋</span>แยกตามประเภทลา</div>
-        <table class="hr-table">
-          <tr><th>ประเภท</th><th>จำนวน</th></tr>
-          ${Object.entries(s.byType).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
-        </table>
-      </div>` : ''}
-      ${d.leaves && d.leaves.length ? `
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📜</span>รายการล่าสุด (100 รายการ)</div>
-        <table class="hr-table">
-          <tr><th>ชื่อ</th><th>ประเภท</th><th>วัน</th><th>สถานะ</th></tr>
-          ${d.leaves.slice(0,30).map(l=>`<tr>
-            <td>${l.name||'—'}</td>
-            <td>${l.leaveType||'—'}</td>
-            <td>${l.days||0}</td>
-            <td>${l.status||'—'}</td>
-          </tr>`).join('')}
-        </table>
-      </div>` : ''}`;
-  } catch (e) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div></div>`;
+    const res = await fetch(GAS_WEB_APP_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body:    JSON.stringify(payload),
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      showSuccess(result.leaveId);
+    } else {
+      showToast('เกิดข้อผิดพลาด: ' + (result.message || 'ลองใหม่อีกครั้ง'));
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  } catch (err) {
+    console.error(err);
+    showToast('ไม่สามารถเชื่อมต่อได้ กรุณาลองใหม่');
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 }
 
-// ── Toast ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+// ===== Success =====
+function showSuccess(leaveId) {
+  document.getElementById('mainForm').style.display = 'none';
+  document.getElementById('successScreen').classList.add('show');
+  document.getElementById('leaveIdDisplay').textContent = leaveId;
 }
 
-// ── Start ──
-init();
+function closeLIFF() {
+  if (typeof liff !== 'undefined' && liff.isInClient()) {
+    liff.closeWindow();
+  } else {
+    window.close();
+  }
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ===== Helpers =====
+function toDateStr(d) {
+  return d.toISOString().split('T')[0];
+}
+
+function getThaiMonthYear(d) {
+  const months = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
+function formatThai(d) {
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = d.getFullYear() + 543;
+  return `${dd}/${mm}/${yy}`;
+}
+
+// ===== Init =====
+initLIFF();
 </script>
 </body>
 </html>
