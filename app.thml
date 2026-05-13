@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ระบบลาออนไลน์</title>
+  <script src="https://static.line-scdn.net/liff/edge/versions/2.22.3/sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:       #0D1B3E;
+      --royal:      #1E3A6E;
+      --gold:       #C5A55A;
+      --gold-pale:  #FBF4E4;
+      --gold-dark:  #8B7340;
+      --green:      #2D8B4E;
+      --green-bg:   #E8F5ED;
+      --red:        #C0392B;
+      --red-bg:     #FEE2E2;
+      --orange:     #D4880F;
+      --orange-bg:  #FEF6E3;
+      --gray-50:    #FAFAF8;
+      --gray-100:   #F3F2EE;
+      --gray-200:   #E5E3DC;
+      --gray-400:   #9CA3AF;
+      --gray-600:   #6B7280;
+      --gray-800:   #1F2937;
+      --white:      #FFFFFF;
+      --tab-h:      60px;
+      --radius:     14px;
+      --shadow:     0 4px 24px rgba(13,27,62,0.10);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      background: var(--gray-50);
+      color: var(--gray-800);
+      min-height: 100vh;
+      overscroll-behavior: none;
+    }
+
+    /* ── Init Loading ── */
+    #initLoading {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(135deg, var(--navy), var(--royal));
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: white;
+    }
+    #initLoading .mascot { font-size: 56px; margin-bottom: 16px; }
+    #initLoading .title { font-size: 20px; font-weight: 800; color: var(--gold); }
+    #initLoading .sub { font-size: 13px; color: #8899BB; margin-top: 6px; }
+    .dots { display: flex; gap: 8px; margin-top: 24px; }
+    .dots span {
+      width: 8px; height: 8px; background: var(--gold); border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .dots span:nth-child(2) { animation-delay: .2s; }
+    .dots span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce { 0%,80%,100%{transform:scale(0.8);opacity:0.4} 40%{transform:scale(1.3);opacity:1} }
+
+    /* ── App Shell ── */
+    #app { display: none; }
+
+    /* ── Top Header ── */
+    .app-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--navy);
+      padding: 14px 16px 10px;
+    }
+    .app-header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .app-logo { display: flex; align-items: center; gap: 10px; }
+    .app-logo .alpaca { font-size: 26px; }
+    .app-logo .org { font-size: 10px; color: #8899BB; font-weight: 500; }
+    .app-logo .sys { font-size: 14px; color: var(--gold); font-weight: 800; }
+    .app-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--royal); overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold); font-weight: 800; font-size: 16px;
+      border: 2px solid rgba(197,165,90,0.4);
+      flex-shrink: 0;
+    }
+    .app-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* ── Bottom Tab Bar ── */
+    .tab-bar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      background: var(--white);
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.08);
+      display: flex;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .tab-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 8px 4px 6px;
+      cursor: pointer; border: none; background: none;
+      color: var(--gray-400); font-family: inherit;
+      font-size: 10px; font-weight: 600;
+      transition: color 0.2s;
+      gap: 2px;
+    }
+    .tab-btn .tab-icon { font-size: 20px; line-height: 1; }
+    .tab-btn.active { color: var(--navy); }
+
+    /* ── Content Area ── */
+    .tab-content {
+      display: none;
+      padding: 14px 14px calc(var(--tab-h) + 14px + env(safe-area-inset-bottom, 0px));
+      min-height: calc(100vh - 56px);
+    }
+    .tab-content.active { display: block; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(197,165,90,0.08);
+    }
+    .card-title {
+      font-size: 13px; font-weight: 700; color: var(--navy);
+      margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .card-title .ct-icon {
+      width: 26px; height: 26px; border-radius: 8px;
+      background: var(--gold-pale);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+    }
+
+    /* ── Hero Profile Card ── */
+    .profile-hero {
+      background: linear-gradient(135deg, #061A3A 0%, #073B82 70%, #0C7BFF 100%);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 12px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 14px 30px rgba(13,27,62,0.20);
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute; right: -30px; bottom: -40px;
+      width: 130px; height: 130px; border-radius: 50%;
+      background: rgba(255,210,46,0.14);
+    }
+    .profile-hero-row {
+      display: flex; align-items: center; gap: 14px; position: relative; z-index: 1;
+    }
+    .profile-big-avatar {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: rgba(255,255,255,0.15);
+      border: 2px solid rgba(197,165,90,0.5);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; font-weight: 800; color: var(--gold);
+      flex-shrink: 0; overflow: hidden;
+    }
+    .profile-big-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
+    .profile-hero-info { flex: 1; min-width: 0; }
+    .profile-hero-name { font-size: 18px; font-weight: 800; color: white; }
+    .profile-hero-dept { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
+    .profile-hero-id {
+      display: inline-block; margin-top: 8px;
+      padding: 4px 10px; border-radius: 999px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      font-size: 10px; color: rgba(255,255,255,0.75); font-weight: 600;
+    }
+
+    /* ── Balance Cards ── */
+    .balance-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .balance-card {
+      border-radius: 14px; padding: 14px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      text-align: center;
+    }
+    .balance-card .bc-icon { font-size: 22px; }
+    .balance-card .bc-num { font-size: 28px; font-weight: 800; line-height: 1; }
+    .balance-card .bc-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+    .balance-card .bc-sub { font-size: 10px; margin-top: 2px; }
+    .bc-bar-wrap {
+      width: 100%; height: 5px; border-radius: 3px; overflow: hidden;
+      margin-top: 6px; background: rgba(0,0,0,0.08);
+    }
+    .bc-bar { height: 100%; border-radius: 3px; transition: width 0.6s; }
+
+    /* ── Leave History Items ── */
+    .leave-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .leave-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .leave-type-icon {
+      width: 40px; height: 40px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .leave-item-info { flex: 1; min-width: 0; }
+    .leave-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .leave-item-type { font-size: 14px; font-weight: 700; color: var(--navy); }
+    .status-pill {
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .status-pill.approved { background: var(--green-bg); color: var(--green); }
+    .status-pill.pending  { background: var(--orange-bg); color: var(--orange); }
+    .status-pill.rejected { background: var(--red-bg); color: var(--red); }
+    .leave-item-date { font-size: 12px; color: var(--gray-600); margin-top: 3px; }
+    .leave-item-days { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
+
+    /* ── Profile Edit Fields ── */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--gray-600); margin-bottom: 5px; }
+    .field-input {
+      width: 100%; padding: 12px 14px;
+      border: 1.5px solid var(--gray-200); border-radius: 12px;
+      font-size: 14px; font-family: inherit; color: var(--gray-800);
+      background: var(--gray-50);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .field-input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(197,165,90,0.15); background: var(--white); }
+    .field-input[readonly] { color: var(--gray-400); background: var(--gray-100); cursor: not-allowed; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+      color: white; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-primary:active { opacity: 0.85; }
+    .btn-primary:disabled { background: var(--gray-400); cursor: not-allowed; }
+
+    .btn-navy {
+      width: 100%; padding: 14px;
+      background: var(--navy);
+      color: var(--gold); border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-navy:active { opacity: 0.85; }
+
+    /* ── HR Dashboard ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-box {
+      border-radius: 14px; padding: 16px;
+      display: flex; flex-direction: column;
+    }
+    .stat-box .sb-label { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+    .stat-box .sb-num { font-size: 30px; font-weight: 800; line-height: 1; }
+    .stat-box .sb-sub { font-size: 11px; margin-top: 4px; }
+
+    .hr-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .hr-table th { background: var(--navy); color: var(--gold); padding: 8px; text-align: left; font-weight: 700; }
+    .hr-table td { padding: 8px; border-bottom: 1px solid var(--gray-100); }
+    .hr-table tr:last-child td { border-bottom: none; }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center; padding: 48px 24px;
+      color: var(--gray-400);
+    }
+    .empty-state .es-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .es-title { font-size: 15px; font-weight: 700; color: var(--gray-600); margin-bottom: 6px; }
+    .empty-state .es-sub { font-size: 13px; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed; bottom: calc(var(--tab-h) + 12px); left: 14px; right: 14px;
+      background: var(--navy); color: white;
+      padding: 12px 16px; border-radius: 12px; font-size: 13px; font-weight: 600;
+      z-index: 9000; opacity: 0; transform: translateY(12px);
+      transition: all 0.3s; pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<!-- Init Loading -->
+<div id="initLoading">
+  <div class="mascot">🦙</div>
+  <div class="title">ระบบลาออนไลน์</div>
+  <div class="sub">กำลังโหลด...</div>
+  <div class="dots"><span></span><span></span><span></span></div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <!-- Top Header -->
+  <div class="app-header">
+    <div class="app-header-inner">
+      <div class="app-logo">
+        <span class="alpaca">🦙</span>
+        <div class="title-wrap">
+          <div class="org">มหาวิทยาลัยธรรมศาสตร์</div>
+          <div class="sys">ระบบลาออนไลน์</div>
+        </div>
+      </div>
+      <div class="app-avatar" id="avatarEl">👤</div>
+    </div>
+  </div>
+
+  <!-- Tab Contents -->
+  <div id="tab-submit" class="tab-content active">
+    <!-- filled by JS -->
+  </div>
+
+  <div id="tab-history" class="tab-content">
+    <div id="historyContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <div id="tab-balance" class="tab-content">
+    <div id="balanceContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <div id="tab-profile" class="tab-content">
+    <div id="profileContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <div id="tab-hr" class="tab-content">
+    <div id="hrContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-btn active" data-tab="submit" onclick="switchTab('submit')">
+      <span class="tab-icon">📋</span>ยื่นใบลา
+    </button>
+    <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+      <span class="tab-icon">📜</span>ประวัติ
+    </button>
+    <button class="tab-btn" data-tab="balance" onclick="switchTab('balance')">
+      <span class="tab-icon">📅</span>วันลา
+    </button>
+    <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
+      <span class="tab-icon">👤</span>โปรไฟล์
+    </button>
+    <button class="tab-btn" data-tab="hr" id="hrTabBtn" style="display:none" onclick="switchTab('hr')">
+      <span class="tab-icon">📊</span>HR
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
+const LIFF_ID       = '2010068016-eWjYDlXc';              // LIFF ID สำหรับ portal นี้ (endpoint: https://chanun01-gif.github.io/liff/app.html)
+const LIFF_FORM_ID  = '2010068016-uNZ0EWnx';              // LIFF ID เดิม สำหรับ form ยื่นใบลา
+const LIFF_FORM_URL = `https://liff.line.me/${LIFF_FORM_ID}`;
+
+let userId    = '';
+let userProfile = null;
+let employee  = null;
+let isHr      = false;
+let tabLoaded = { submit: false, history: false, balance: false, profile: false, hr: false };
+
+// ── Tab Switching ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = '';
+  });
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  const content = document.getElementById('tab-' + name);
+  if (content) content.classList.add('active');
+  const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
+  if (btn) btn.classList.add('active');
+  if (!tabLoaded[name]) {
+    loadTab(name);
+    tabLoaded[name] = true;
+  }
+}
+
+function loadTab(name) {
+  if (name === 'submit')  renderSubmit();
+  if (name === 'history') loadHistory();
+  if (name === 'balance') renderBalance();
+  if (name === 'profile') renderProfile();
+  if (name === 'hr')      loadHr();
+}
+
+// ── Init ──
+async function init() {
+  try {
+    await liff.init({ liffId: LIFF_ID });
+    if (!liff.isLoggedIn()) { liff.login(); return; }
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+    userProfile = profile;
+  } catch (err) {
+    userId = new URLSearchParams(location.search).get('userId') || 'TEST_USER';
+  }
+
+  // set avatar
+  if (userProfile && userProfile.pictureUrl) {
+    document.getElementById('avatarEl').innerHTML =
+      `<img src="${userProfile.pictureUrl}" alt="">`;
+  } else if (userProfile && userProfile.displayName) {
+    document.getElementById('avatarEl').textContent = userProfile.displayName.charAt(0);
+  }
+
+  // load employee data
+  try {
+    const r = await fetch(`${GAS_URL}?mode=api&action=employee&userId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (d.found) employee = d.employee;
+  } catch (e) {}
+
+  // HR check — ใช้ค่า isHr จาก API
+  isHr = !!(employee && employee.isHr);
+  if (isHr) {
+    document.getElementById('hrTabBtn').style.display = 'flex';
+  }
+
+  // Show app
+  document.getElementById('initLoading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+
+  // Load first tab
+  tabLoaded.submit = true;
+  renderSubmit();
+}
+
+// ═══════════════════════════════════════════
+// TAB: ยื่นใบลา
+// ═══════════════════════════════════════════
+function renderSubmit() {
+  const el = document.getElementById('tab-submit');
+
+  if (employee) {
+    el.innerHTML = `
+      <div class="profile-hero" style="margin-bottom:14px">
+        <div class="profile-hero-row">
+          <div class="profile-big-avatar">${(employee.name||'ผ').charAt(0)}</div>
+          <div class="profile-hero-info">
+            <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
+            <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
+            <div class="profile-hero-id">📋 ยินดีต้อนรับ</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📋</span>ยื่นใบลา</div>
+        <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
+          กดปุ่มด้านล่างเพื่อกรอกแบบฟอร์มยื่นใบลา<br>
+          ระบบจะแจ้งหัวหน้าทันทีหลังส่งคำขอ
+        </p>
+        ${renderBalanceMiniCards()}
+        <div style="height:14px"></div>
+        <button class="btn-navy" onclick="openLIFFForm()">
+          <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
+        </button>
+      </div>`;
+  } else {
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📋</span>ยื่นใบลา</div>
+        <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
+          กดปุ่มด้านล่างเพื่อกรอกแบบฟอร์มยื่นใบลา<br>
+          ระบบจะแจ้งหัวหน้าทันทีหลังส่งคำขอ
+        </p>
+        <button class="btn-navy" onclick="openLIFFForm()">
+          <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
+        </button>
+      </div>`;
+  }
+}
+
+function renderBalanceMiniCards() {
+  if (!employee) return '';
+  const items = [
+    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF' },
+    { icon:'🏠',  label:'ลากิจ',   val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
+    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4' },
+  ];
+  return `<div class="balance-grid">${items.map(it => {
+    const pct = Math.min(100, Math.round((it.val/it.max)*100));
+    return `<div class="balance-card" style="background:${it.bg}">
+      <span class="bc-icon">${it.icon}</span>
+      <span class="bc-num" style="color:${it.color}">${it.val}</span>
+      <span class="bc-label" style="color:${it.color}">${it.label}</span>
+      <div class="bc-bar-wrap"><div class="bc-bar" style="width:${pct}%;background:${it.color}"></div></div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function openLIFFForm() {
+  const url = userId ? `${LIFF_FORM_URL}?userId=${encodeURIComponent(userId)}` : LIFF_FORM_URL;
+  if (typeof liff !== 'undefined' && liff.isInClient()) {
+    liff.openWindow({ url, external: false });
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+// ═══════════════════════════════════════════
+// TAB: ประวัติ
+// ═══════════════════════════════════════════
+async function loadHistory() {
+  const el = document.getElementById('historyContent');
+  el.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div>';
+  try {
+    const r = await fetch(`${GAS_URL}?mode=api&action=my_leaves&userId=${encodeURIComponent(userId)}&limit=30`);
+    const d = await r.json();
+    if (!d.leaves || d.leaves.length === 0) {
+      el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ยังไม่มีประวัติการลา</div><div class="es-sub">พิมพ์ "ลา" ใน LINE หรือกดแท็บยื่นใบลา</div></div>`;
+      return;
+    }
+    el.innerHTML = `<div class="card"><div class="card-title"><span class="ct-icon">📜</span>ประวัติการลา ${d.leaves.length} รายการ</div>${d.leaves.map(renderLeaveItem).join('')}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div><div class="es-sub">กรุณาลองใหม่อีกครั้ง</div></div>`;
+  }
+}
+
+function renderLeaveItem(leave) {
+  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
+  const icon = typeIcons[leave.leaveType] || '📄';
+  const typeBg = { 'ลาพักร้อน':'#EFF6FF','ลากิจ':'#F0FDFA','ลาป่วย':'#F0FDF4','ลาคลอด':'#FDF4FF','ลาบวช':'#FFF7ED' };
+  const bg = typeBg[leave.leaveType] || '#F3F4F6';
+
+  let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
+  if (leave.status === 'อนุมัติ')    { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
+  if (leave.status === 'ไม่อนุมัติ') { statusClass = 'rejected'; statusText = '❌ ไม่อนุมัติ'; }
+
+  const days = Number(leave.days) || 0;
+  const dayText = leave.period === 'เต็มวัน' || !leave.period
+    ? `${days} วันทำการ`
+    : `${leave.period} (0.5 วัน)`;
+
+  return `<div class="leave-item">
+    <div class="leave-type-icon" style="background:${bg}">${icon}</div>
+    <div class="leave-item-info">
+      <div class="leave-item-top">
+        <div class="leave-item-type">${leave.leaveType||'ไม่ระบุ'}</div>
+        <div class="status-pill ${statusClass}">${statusText}</div>
+      </div>
+      <div class="leave-item-date">📅 ${leave.startDate}${leave.endDate && leave.endDate !== leave.startDate ? ' — ' + leave.endDate : ''}</div>
+      <div class="leave-item-days">⏱ ${dayText}${leave.remark ? ' · ' + leave.remark : ''}</div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// TAB: วันลาคงเหลือ
+// ═══════════════════════════════════════════
+function renderBalance() {
+  const el = document.getElementById('balanceContent');
+  if (!employee) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ไม่พบข้อมูลพนักงาน</div><div class="es-sub">กรุณาลงทะเบียนในระบบก่อน<br>พิมพ์ "ลงทะเบียน" ใน LINE</div></div>`;
+    return;
+  }
+  const types = [
+    { icon:'🏖️', label:'ลาพักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF' },
+    { icon:'🏠',  label:'ลากิจ',     val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
+    { icon:'🏥',  label:'ลาป่วย',    val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4' },
+  ];
+  el.innerHTML = `
+    <div class="profile-hero">
+      <div class="profile-hero-row">
+        <div class="profile-big-avatar">${(employee.name||'ผ').charAt(0)}</div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
+          <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
+          <div class="profile-hero-id">🗓 วันลาคงเหลือ ปี ${new Date().getFullYear()+543}</div>
+        </div>
+      </div>
+    </div>
+    ${types.map(it => renderBalanceDetailCard(it)).join('')}`;
+}
+
+function renderBalanceDetailCard(it) {
+  const pct = it.max > 0 ? Math.min(100, Math.round((it.val/it.max)*100)) : 0;
+  const used = it.max - it.val;
+  return `<div class="card" style="border-left:4px solid ${it.color}">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <div style="font-size:28px">${it.icon}</div>
+      <div style="flex:1">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">${it.label}</div>
+        <div style="font-size:11px;color:var(--gray-400);margin-top:2px">ใช้ไปแล้ว ${used} วัน จากทั้งหมด ${it.max} วัน</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:32px;font-weight:800;color:${it.color};line-height:1">${it.val}</div>
+        <div style="font-size:11px;color:var(--gray-400)">วันคงเหลือ</div>
+      </div>
+    </div>
+    <div style="background:#E5E7EB;border-radius:6px;height:8px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:${it.color};border-radius:6px;transition:width 0.6s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span style="font-size:10px;color:var(--gray-400)">0</span>
+      <span style="font-size:10px;color:${it.color};font-weight:700">${pct}% คงเหลือ</span>
+      <span style="font-size:10px;color:var(--gray-400)">${it.max}</span>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// TAB: โปรไฟล์
+// ═══════════════════════════════════════════
+function renderProfile() {
+  const el = document.getElementById('profileContent');
+  const emp = employee || {};
+  el.innerHTML = `
+    <div class="profile-hero">
+      <div class="profile-hero-row">
+        <div class="profile-big-avatar">${userProfile && userProfile.pictureUrl
+          ? `<img src="${userProfile.pictureUrl}" alt="">`
+          : (emp.name||'ผ').charAt(0)}</div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name">${emp.name||userProfile&&userProfile.displayName||'ไม่ระบุชื่อ'}</div>
+          <div class="profile-hero-dept">${emp.department||'ไม่ระบุแผนก'}</div>
+          <div class="profile-hero-id">รหัส: ${emp.id||'—'}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">👤</span>ข้อมูลส่วนตัว</div>
+      <div class="field"><label>ชื่อ-นามสกุล</label><input class="field-input" id="pName" value="${emp.name||''}" placeholder="ชื่อ-นามสกุล"></div>
+      <div class="field"><label>แผนก / ส่วนงาน</label><input class="field-input" id="pDept" value="${emp.department||''}" placeholder="แผนก"></div>
+      <div class="field"><label>อีเมล</label><input class="field-input" id="pEmail" type="email" value="${emp.email||''}" placeholder="อีเมล"></div>
+      <div class="field"><label>เบอร์โทรศัพท์</label><input class="field-input" id="pPhone" value="${emp.phone||''}" placeholder="เบอร์โทร"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">🔒</span>ข้อมูลระบบ (แก้ไขไม่ได้)</div>
+      <div class="field"><label>LINE User ID</label><input class="field-input" readonly value="${userId||'—'}"></div>
+      <div class="field"><label>รหัสพนักงาน</label><input class="field-input" readonly value="${emp.id||'ยังไม่ได้ลงทะเบียน'}"></div>
+    </div>
+    ${emp.id ? `<button class="btn-primary" onclick="saveProfile()">💾 บันทึกข้อมูล</button>` : `
+    <button class="btn-navy" onclick="openRegister()">📝 ลงทะเบียนในระบบ</button>`}
+    <div style="height:8px"></div>`;
+}
+
+async function saveProfile() {
+  const name = document.getElementById('pName').value.trim();
+  const dept = document.getElementById('pDept').value.trim();
+  const email = document.getElementById('pEmail').value.trim();
+  const phone = document.getElementById('pPhone').value.trim();
+  if (!name || !dept) { showToast('⚠️ กรุณากรอกชื่อและแผนก'); return; }
+
+  const payload = {
+    source: 'liff', action: 'register',
+    userId, name, department: dept, email, phone,
+    employeeId: employee ? employee.id : '',
+    managerUserId: employee ? employee.managerUserId : '',
+    annualLeave: employee ? employee.annualLeave : '',
+    personalLeave: employee ? employee.personalLeave : '',
+    sickLeave: employee ? employee.sickLeave : '',
+  };
+  try {
+    const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
+    const d = await r.json();
+    if (d.success) {
+      showToast('✅ บันทึกข้อมูลสำเร็จ');
+      if (employee) { employee.name = name; employee.department = dept; employee.email = email; employee.phone = phone; }
+    } else { showToast('❌ ' + (d.message||'บันทึกไม่สำเร็จ')); }
+  } catch (e) { showToast('❌ เชื่อมต่อไม่สำเร็จ'); }
+}
+
+function openRegister() {
+  const url = `${GAS_URL}?mode=register&userId=${encodeURIComponent(userId)}`;
+  if (typeof liff !== 'undefined' && liff.isInClient()) {
+    liff.openWindow({ url, external: true });
+  } else { window.open(url, '_blank'); }
+}
+
+// ═══════════════════════════════════════════
+// TAB: HR Dashboard
+// ═══════════════════════════════════════════
+async function loadHr() {
+  const el = document.getElementById('hrContent');
+  try {
+    const r = await fetch(`${GAS_URL}?mode=api&action=dashboard`);
+    const d = await r.json();
+    const s = d.summary || {};
+    el.innerHTML = `
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📊</span>สรุปเดือนนี้ (${s.month||'—'})</div>
+        <div class="stat-grid">
+          <div class="stat-box" style="background:#EFF6FF">
+            <div class="sb-label" style="color:#1D4ED8">📋 ยื่นทั้งหมด</div>
+            <div class="sb-num" style="color:#1D4ED8">${s.total||0}</div>
+            <div class="sb-sub" style="color:#3B82F6">${s.days||0} วันรวม</div>
+          </div>
+          <div class="stat-box" style="background:#F0FDF4">
+            <div class="sb-label" style="color:#15803D">✅ อนุมัติ</div>
+            <div class="sb-num" style="color:#15803D">${s.approved||0}</div>
+            <div class="sb-sub" style="color:#22C55E">รายการ</div>
+          </div>
+          <div class="stat-box" style="background:#FEF6E3">
+            <div class="sb-label" style="color:#D4880F">⏳ รออนุมัติ</div>
+            <div class="sb-num" style="color:#D4880F">${s.pending||0}</div>
+            <div class="sb-sub" style="color:#FBBF24">รายการ</div>
+          </div>
+          <div class="stat-box" style="background:#FEE2E2">
+            <div class="sb-label" style="color:#C0392B">❌ ไม่อนุมัติ</div>
+            <div class="sb-num" style="color:#C0392B">${s.rejected||0}</div>
+            <div class="sb-sub" style="color:#EF4444">รายการ</div>
+          </div>
+        </div>
+      </div>
+      ${s.byType && Object.keys(s.byType).length ? `
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📋</span>แยกตามประเภทลา</div>
+        <table class="hr-table">
+          <tr><th>ประเภท</th><th>จำนวน</th></tr>
+          ${Object.entries(s.byType).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
+        </table>
+      </div>` : ''}
+      ${d.leaves && d.leaves.length ? `
+      <div class="card">
+        <div class="card-title"><span class="ct-icon">📜</span>รายการล่าสุด (100 รายการ)</div>
+        <table class="hr-table">
+          <tr><th>ชื่อ</th><th>ประเภท</th><th>วัน</th><th>สถานะ</th></tr>
+          ${d.leaves.slice(0,30).map(l=>`<tr>
+            <td>${l.name||'—'}</td>
+            <td>${l.leaveType||'—'}</td>
+            <td>${l.days||0}</td>
+            <td>${l.status||'—'}</td>
+          </tr>`).join('')}
+        </table>
+      </div>` : ''}`;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div></div>`;
+  }
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Start ──
+init();
+</script>
+</body>
+</html>
