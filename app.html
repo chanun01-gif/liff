@@ -68,7 +68,7 @@
       background:
         radial-gradient(circle at 86% 22%, rgba(255,210,46,0.80) 0 16%, transparent 17%),
         linear-gradient(135deg, #061A3A 0%, #073B82 68%, #0C7BFF 100%);
-      padding: 14px 16px 12px;
+      padding: 20px 16px 22px;
       overflow: hidden;
     }
     .app-header::before {
@@ -106,7 +106,7 @@
       background: linear-gradient(135deg, #FFD22E 0%, #FFC400 100%);
       color: var(--navy); font-size: 12px; font-weight: 700;
       padding: 5px 16px; text-align: center;
-      position: sticky; top: 58px; z-index: 99;
+      position: sticky; top: 80px; z-index: 99;
     }
 
     /* ── Bottom Tab Bar ── */
@@ -289,6 +289,55 @@
     .hr-table td { padding: 8px; border-bottom: 1px solid var(--gray-100); }
     .hr-table tr:last-child td { border-bottom: none; }
 
+    /* ── Register Tab ── */
+    .reg-section {
+      background: var(--white); border-radius: 18px;
+      box-shadow: var(--shadow); padding: 18px; margin-bottom: 14px;
+      border: 1px solid rgba(197,165,90,0.08);
+    }
+    .reg-section-title {
+      font-size: 13px; font-weight: 700; color: var(--navy);
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .reg-section-title .rsi {
+      width: 28px; height: 28px; background: var(--gold-pale); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    }
+    .reg-section-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(90deg, var(--gold-pale), transparent);
+    }
+    .reg-balance-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 6px; }
+    .reg-balance-card {
+      background: var(--gray-50); border: 1.5px solid var(--gray-200);
+      border-radius: 14px; padding: 10px 8px; text-align: center;
+    }
+    .reg-balance-card .rbc-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+    .reg-balance-card .rbc-label { font-size: 11px; font-weight: 700; color: var(--gray-600); margin-bottom: 6px; }
+    .reg-balance-card input[type="number"] {
+      width: 100%; padding: 8px 4px; text-align: center;
+      font-size: 18px; font-weight: 800; color: var(--navy);
+      border: 1.5px solid var(--gray-200); border-radius: 8px;
+      font-family: inherit; background: var(--white);
+    }
+    .status-note-reg {
+      display: none; align-items: center; gap: 10px;
+      padding: 12px 14px; margin-bottom: 14px;
+      background: var(--gold-pale); border: 1px solid rgba(197,165,90,0.35);
+      border-left: 4px solid var(--gold); border-radius: 10px;
+      font-size: 13px; font-weight: 700; color: var(--navy);
+    }
+    .status-note-reg.show { display: flex; }
+    .info-note-sm {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 12px; background: var(--gold-pale);
+      border-radius: 8px; border-left: 3px solid var(--gold); margin-top: 12px;
+      font-size: 12px; color: var(--gray-600); line-height: 1.5;
+    }
+    label .req { color: var(--red); margin-left: 2px; font-size: 11px; }
+    label .opt { color: var(--gray-400); margin-left: 3px; font-size: 11px; font-weight: 400; }
+
     /* ── Empty State ── */
     .empty-state {
       text-align: center; padding: 48px 24px;
@@ -360,6 +409,14 @@
     <div id="hrContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
   </div>
 
+  <div id="tab-register" class="tab-content">
+    <div id="registerContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <div id="tab-team" class="tab-content">
+    <div id="teamContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
   <!-- Bottom Tab Bar -->
   <div class="tab-bar" id="tabBar">
     <button class="tab-btn active" data-tab="submit" onclick="switchTab('submit')">
@@ -373,6 +430,12 @@
     </button>
     <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
       <span class="tab-icon">👤</span>โปรไฟล์
+    </button>
+    <button class="tab-btn" data-tab="register" onclick="switchTab('register')">
+      <span class="tab-icon">📝</span>ลงทะเบียน
+    </button>
+    <button class="tab-btn" data-tab="team" id="teamTabBtn" style="display:none" onclick="switchTab('team')">
+      <span class="tab-icon">👥</span>ทีม
     </button>
     <button class="tab-btn" data-tab="hr" id="hrTabBtn" style="display:none" onclick="switchTab('hr')">
       <span class="tab-icon">📊</span>HR
@@ -409,11 +472,12 @@ const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
   <path d="M28 35l5 10 10 5-10 5-5 10-5-10-10-5 10-5 5-10z" fill="#fff"/>
 </svg>`;
 
-let userId    = '';
+let userId      = '';
 let userProfile = null;
-let employee  = null;
-let isHr      = false;
-let tabLoaded = { submit: false, history: false, balance: false, profile: false, hr: false };
+let employee    = null;
+let isHr        = false;
+let isManager   = false;
+let tabLoaded = { submit: false, history: false, balance: false, profile: false, hr: false, register: false, team: false };
 
 // ── Tab Switching ──
 function switchTab(name) {
@@ -433,11 +497,13 @@ function switchTab(name) {
 }
 
 function loadTab(name) {
-  if (name === 'submit')  renderSubmit();
-  if (name === 'history') loadHistory();
-  if (name === 'balance') renderBalance();
-  if (name === 'profile') renderProfile();
-  if (name === 'hr')      loadHr();
+  if (name === 'submit')   renderSubmit();
+  if (name === 'history')  loadHistory();
+  if (name === 'balance')  renderBalance();
+  if (name === 'profile')  renderProfile();
+  if (name === 'hr')       loadHr();
+  if (name === 'register') renderRegister();
+  if (name === 'team')     loadTeam();
 }
 
 // ── Helpers ──
@@ -490,11 +556,11 @@ async function init() {
     if (d.found) employee = d.employee;
   } catch (e) {}
 
-  // HR check — ใช้ค่า isHr จาก API
-  isHr = !!(employee && employee.isHr);
-  if (isHr) {
-    document.getElementById('hrTabBtn').style.display = 'flex';
-  }
+  // HR / Manager check — ใช้ค่าจาก API
+  isHr      = !!(employee && employee.isHr);
+  isManager = !!(employee && employee.isManager);
+  if (isHr)      document.getElementById('hrTabBtn').style.display = 'flex';
+  if (isManager) document.getElementById('teamTabBtn').style.display = 'flex';
 
   // Show app
   document.getElementById('initLoading').style.display = 'none';
@@ -515,7 +581,7 @@ function renderSubmit() {
     el.innerHTML = `
       <div class="profile-hero" style="margin-bottom:14px">
         <div class="profile-hero-row">
-          <div class="profile-big-avatar">${(employee.name||'ผ').charAt(0)}</div>
+          <div class="profile-big-avatar">${userProfile&&userProfile.pictureUrl?`<img src="${userProfile.pictureUrl}" alt="">`:(employee.name||'ผ').charAt(0)}</div>
           <div class="profile-hero-info">
             <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
             <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
@@ -645,7 +711,7 @@ function renderBalance() {
         <div class="profile-hero-info">
           <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
           <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
-          <div class="profile-hero-id">🗓 วันลาคงเหลือ ปี ${new Date().getFullYear()+543}</div>
+          <div class="profile-hero-id">🗓 วันลาคงเหลือ ปีงบประมาณ ${new Date().getFullYear()+543}</div>
         </div>
       </div>
     </div>
@@ -805,6 +871,206 @@ async function loadHr() {
       </div>` : ''}`;
   } catch (e) {
     el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// TAB: ทีม (หัวหน้า)
+// ═══════════════════════════════════════════
+async function loadTeam() {
+  const el = document.getElementById('teamContent');
+  el.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div>';
+
+  let myLeaves = [], teamLeaves = [];
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch(`${GAS_URL}?mode=api&action=my_leaves&userId=${encodeURIComponent(userId)}&limit=20`),
+      fetch(`${GAS_URL}?mode=api&action=team_requests&managerId=${encodeURIComponent(userId)}`)
+    ]);
+    const d1 = await r1.json();
+    const d2 = await r2.json();
+    myLeaves   = d1.leaves  || [];
+    teamLeaves = d2.leaves  || [];
+  } catch (e) {}
+
+  const pendingTeam = teamLeaves.filter(l => l.status === 'รออนุมัติ' || l.status === 'pending');
+  const otherTeam   = teamLeaves.filter(l => l.status !== 'รออนุมัติ' && l.status !== 'pending');
+
+  el.innerHTML = `
+    ${pendingTeam.length ? `
+    <div class="card" style="border-left:4px solid var(--orange)">
+      <div class="card-title"><span class="ct-icon">⏳</span>รออนุมัติ (${pendingTeam.length} รายการ)</div>
+      ${pendingTeam.map(l => renderTeamLeaveItem(l, true)).join('')}
+    </div>` : `
+    <div class="card" style="border-left:4px solid var(--green)">
+      <div style="display:flex;align-items:center;gap:10px;padding:4px 0">
+        <span style="font-size:24px">✅</span>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">ไม่มีคำขอรออนุมัติ</span>
+      </div>
+    </div>`}
+
+    ${otherTeam.length ? `
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">📋</span>ประวัติทีม (${otherTeam.length} รายการ)</div>
+      ${otherTeam.slice(0,15).map(l => renderTeamLeaveItem(l, false)).join('')}
+    </div>` : ''}
+
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">📜</span>ประวัติการลาของฉัน</div>
+      ${myLeaves.length
+        ? myLeaves.map(renderLeaveItem).join('')
+        : '<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px">ยังไม่มีประวัติการลา</div>'}
+    </div>`;
+}
+
+function renderTeamLeaveItem(leave, showApprove) {
+  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
+  const icon = typeIcons[leave.leaveType] || '📄';
+  let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
+  if (leave.status === 'อนุมัติ')    { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
+  if (leave.status === 'ไม่อนุมัติ') { statusClass = 'rejected'; statusText = '❌ ไม่อนุมัติ'; }
+  const days = Number(leave.days) || 0;
+  return `<div class="leave-item">
+    <div class="leave-type-icon" style="background:var(--gray-100)">${icon}</div>
+    <div class="leave-item-info">
+      <div class="leave-item-top">
+        <div style="font-size:13px;font-weight:700;color:var(--navy)">${leave.name||'ไม่ระบุ'}</div>
+        <div class="status-pill ${statusClass}">${statusText}</div>
+      </div>
+      <div style="font-size:12px;color:var(--gray-600);margin-top:2px">${leave.leaveType||'—'} · ${days} วัน</div>
+      <div class="leave-item-date">📅 ${leave.startDate||'—'}${leave.endDate&&leave.endDate!==leave.startDate?' — '+leave.endDate:''}</div>
+      ${leave.remark ? `<div class="leave-item-days">💬 ${leave.remark}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════
+// TAB: ลงทะเบียน
+// ═══════════════════════════════════════════
+function renderRegister() {
+  const el = document.getElementById('registerContent');
+  const prefill = employee || {};
+  el.innerHTML = `
+    <div class="status-note-reg${employee ? ' show' : ''}" id="regStatusNote">
+      <span>📋</span><span>พบข้อมูลเดิมแล้ว — กดบันทึกเพื่ออัปเดต</span>
+    </div>
+
+    <div class="reg-section">
+      <div class="reg-section-title"><span class="rsi">👤</span> ข้อมูลพนักงาน</div>
+      <div class="field">
+        <label>LINE User ID</label>
+        <input class="field-input" type="text" id="reg_userId" value="${userId}" readonly>
+      </div>
+      <div class="field">
+        <label>รหัสพนักงาน <span class="opt">(ถ้ามี)</span></label>
+        <input class="field-input" type="text" id="reg_employeeId" placeholder="เช่น EMP001" value="${prefill.id||''}">
+      </div>
+      <div class="field">
+        <label>ชื่อ-นามสกุล <span class="req">*</span></label>
+        <input class="field-input" type="text" id="reg_name" placeholder="เช่น นางสาวสมใจ ใจดี" value="${prefill.name||(userProfile&&userProfile.displayName)||''}">
+      </div>
+      <div class="field">
+        <label>แผนก / ส่วนงาน <span class="req">*</span></label>
+        <input class="field-input" type="text" id="reg_department" placeholder="เช่น สำนักงานคณบดี" value="${prefill.department||''}">
+      </div>
+    </div>
+
+    <div class="reg-section">
+      <div class="reg-section-title"><span class="rsi">✅</span> ผู้อนุมัติ</div>
+      <div class="field">
+        <label>LINE User ID หัวหน้า</label>
+        <input class="field-input" type="text" id="reg_manager" placeholder="ขึ้นต้นด้วย U..." value="${prefill.managerUserId||''}">
+      </div>
+      <div class="field">
+        <label>LINE User ID ผู้อนุมัติระดับ 2 <span class="opt">(ถ้ามี)</span></label>
+        <input class="field-input" type="text" id="reg_manager2" placeholder="ถ้ามี" value="${prefill.secondManagerUserId||''}">
+      </div>
+    </div>
+
+    <div class="reg-section">
+      <div class="reg-section-title"><span class="rsi">📅</span> ติดต่อและยอดวันลา</div>
+      <div class="field">
+        <label>อีเมล <span class="opt">(ถ้ามี)</span></label>
+        <input class="field-input" type="email" id="reg_email" placeholder="example@email.com" value="${prefill.email||''}">
+      </div>
+      <div class="field">
+        <label>เบอร์โทร <span class="opt">(ถ้ามี)</span></label>
+        <input class="field-input" type="tel" id="reg_phone" placeholder="08x-xxx-xxxx" value="${prefill.phone||''}">
+      </div>
+      <label style="margin-top:16px;margin-bottom:10px;display:block">ยอดวันลาเริ่มต้น</label>
+      <div class="reg-balance-grid">
+        <div class="reg-balance-card">
+          <span class="rbc-emoji">🏖️</span>
+          <div class="rbc-label">พักร้อน</div>
+          <input type="number" id="reg_annual" min="0" step="0.5" value="${prefill.annualLeave!=null?prefill.annualLeave:10}">
+        </div>
+        <div class="reg-balance-card">
+          <span class="rbc-emoji">🏠</span>
+          <div class="rbc-label">ลากิจ</div>
+          <input type="number" id="reg_personal" min="0" step="0.5" value="${prefill.personalLeave!=null?prefill.personalLeave:6}">
+        </div>
+        <div class="reg-balance-card">
+          <span class="rbc-emoji">🏥</span>
+          <div class="rbc-label">ลาป่วย</div>
+          <input type="number" id="reg_sick" min="0" step="0.5" value="${prefill.sickLeave!=null?prefill.sickLeave:30}">
+        </div>
+      </div>
+      <div class="info-note-sm">💡 HR สามารถแก้ยอดวันลาใน Google Sheet ได้ภายหลัง</div>
+    </div>
+
+    <button class="btn-primary" id="regSubmitBtn" onclick="submitRegister()" style="margin-bottom:8px">
+      🦙 บันทึกข้อมูล
+    </button>`;
+}
+
+async function submitRegister() {
+  const name = (document.getElementById('reg_name').value||'').trim();
+  const dept = (document.getElementById('reg_department').value||'').trim();
+  if (!name) { showToast('กรุณากรอกชื่อ-นามสกุล'); return; }
+  if (!dept) { showToast('กรุณากรอกแผนก / ส่วนงาน'); return; }
+
+  const btn = document.getElementById('regSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+
+  const g = id => (document.getElementById(id)||{}).value||'';
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        source: 'liff', action: 'register',
+        userId,
+        employeeId:          g('reg_employeeId'),
+        name,
+        department:          dept,
+        managerUserId:       g('reg_manager'),
+        secondManagerUserId: g('reg_manager2'),
+        email:               g('reg_email'),
+        phone:               g('reg_phone'),
+        annualLeave:   Number(g('reg_annual')   || 10),
+        personalLeave: Number(g('reg_personal') || 6),
+        sickLeave:     Number(g('reg_sick')     || 30),
+      })
+    });
+    const result = await res.json();
+    if (!result.success) throw new Error(result.message || 'บันทึกไม่สำเร็จ');
+
+    // อัปเดต employee ใน memory และ reload แท็บอื่น
+    employee = { ...employee, name, department: dept,
+      managerUserId: g('reg_manager'), secondManagerUserId: g('reg_manager2'),
+      email: g('reg_email'), phone: g('reg_phone'),
+      annualLeave: Number(g('reg_annual')), personalLeave: Number(g('reg_personal')), sickLeave: Number(g('reg_sick'))
+    };
+    tabLoaded.submit = false; tabLoaded.balance = false; tabLoaded.profile = false;
+
+    showToast('✅ บันทึกข้อมูลสำเร็จ!');
+    btn.textContent = '✅ บันทึกแล้ว';
+    document.getElementById('regStatusNote') && document.getElementById('regStatusNote').classList.add('show');
+  } catch (err) {
+    showToast(err.message || String(err));
+    btn.disabled = false;
+    btn.textContent = '🦙 บันทึกข้อมูล';
   }
 }
 
