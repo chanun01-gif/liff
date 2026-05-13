@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Noto Sans Thai', sans-serif; background: #F8F6F0; color: #1F2937; }
+    header { background: #0D1B3E; color: white; padding: 20px 24px; }
+    h1 { margin: 0; font-size: 24px; color: #C5A55A; }
+    main { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+    .stat, .panel { background: #fff; border: 1px solid #E5E3DC; border-radius: 8px; padding: 16px; }
+    .stat .label { color: #6B7280; font-size: 12px; font-weight: 700; }
+    .stat .value { font-size: 28px; font-weight: 800; color: #0D1B3E; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 10px 8px; border-bottom: 1px solid #E5E3DC; text-align: left; vertical-align: top; }
+    th { color: #6B7280; font-size: 12px; }
+    .status { font-weight: 800; }
+    .approved { color: #2D8B4E; }
+    .pending { color: #D4880F; }
+    .rejected { color: #C0392B; }
+    @media (max-width: 860px) { .stats, .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>HR Dashboard</h1>
+    <div id="month">กำลังโหลด...</div>
+  </header>
+  <main>
+    <section class="stats">
+      <div class="stat"><div class="label">พนักงาน</div><div class="value" id="employees">0</div></div>
+      <div class="stat"><div class="label">คำขอเดือนนี้</div><div class="value" id="total">0</div></div>
+      <div class="stat"><div class="label">อนุมัติ</div><div class="value" id="approved">0</div></div>
+      <div class="stat"><div class="label">รออนุมัติ</div><div class="value" id="pending">0</div></div>
+      <div class="stat"><div class="label">รวมวันลา</div><div class="value" id="days">0</div></div>
+    </section>
+    <section class="grid">
+      <div class="panel">
+        <h2>แยกตามประเภท</h2>
+        <div id="byType"></div>
+      </div>
+      <div class="panel">
+        <h2>แยกตามแผนก</h2>
+        <div id="byDept"></div>
+      </div>
+    </section>
+    <section class="panel" style="margin-top:16px">
+      <h2>รายการล่าสุด</h2>
+      <table>
+        <thead><tr><th>รหัส</th><th>ชื่อ</th><th>ประเภท</th><th>วันที่</th><th>จำนวน</th><th>สถานะ</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    async function load() {
+      const base = location.href.split('?')[0];
+      const res = await fetch(base + '?mode=api&action=dashboard');
+      const data = await res.json();
+      const s = data.summary || {};
+      document.getElementById('month').textContent = 'เดือน ' + (s.month || '');
+      set('employees', data.employees || 0);
+      set('total', s.total || 0);
+      set('approved', s.approved || 0);
+      set('pending', s.pending || 0);
+      set('days', s.days || 0);
+      document.getElementById('byType').innerHTML = pairs(s.byType);
+      document.getElementById('byDept').innerHTML = pairs(s.byDept);
+      document.getElementById('rows').innerHTML = (data.leaves || []).map(row).join('');
+    }
+    function set(id, v) { document.getElementById(id).textContent = v; }
+    function pairs(obj) {
+      const keys = Object.keys(obj || {});
+      if (!keys.length) return '<p>ไม่มีข้อมูล</p>';
+      return '<table>' + keys.map(k => `<tr><td>${k}</td><td>${obj[k]} รายการ</td></tr>`).join('') + '</table>';
+    }
+    function row(l) {
+      const cls = l.status === 'อนุมัติ' ? 'approved' : l.status === 'ไม่อนุมัติ' ? 'rejected' : 'pending';
+      return `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.leaveType}</td><td>${l.startDate} - ${l.endDate}</td><td>${l.days}</td><td class="status ${cls}">${l.status}</td></tr>`;
+    }
+    load();
+  </script>
+</body>
+</html>
