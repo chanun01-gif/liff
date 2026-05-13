@@ -893,8 +893,8 @@ async function loadTeam() {
     teamLeaves = d2.leaves  || [];
   } catch (e) {}
 
-  const pendingTeam = teamLeaves.filter(l => l.status === 'รออนุมัติ' || l.status === 'pending');
-  const otherTeam   = teamLeaves.filter(l => l.status !== 'รออนุมัติ' && l.status !== 'pending');
+  const pendingTeam = teamLeaves.filter(l => l.status === 'รอการอนุมัติ' || l.status === 'รออนุมัติระดับ 2');
+  const otherTeam   = teamLeaves.filter(l => l.status !== 'รอการอนุมัติ' && l.status !== 'รออนุมัติระดับ 2');
 
   el.innerHTML = `
     ${pendingTeam.length ? `
