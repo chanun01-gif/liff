@@ -238,6 +238,30 @@
     .day-badge.warn .count { color: var(--orange); }
     .day-badge.hidden { display: none; }
 
+    .period-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .period-card {
+      padding: 12px 8px;
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gray-600);
+      cursor: pointer;
+    }
+    .period-card.selected {
+      border-color: var(--gold);
+      background: var(--gold-pale);
+      color: var(--navy);
+      box-shadow: 0 0 0 3px rgba(197,165,90,0.12);
+    }
+
     /* ===== Leave Type Grid ===== */
     .type-grid {
       display: grid;
@@ -537,6 +561,14 @@
           <div class="sublabel" id="dateRangeText"></div>
         </div>
       </div>
+      <div class="field" style="margin-top:14px">
+        <label>ช่วงเวลา <span class="req">*</span></label>
+        <div class="period-grid" id="periodGrid">
+          <div class="period-card selected" data-value="เต็มวัน">เต็มวัน</div>
+          <div class="period-card" data-value="ครึ่งวันเช้า">เช้า</div>
+          <div class="period-card" data-value="ครึ่งวันบ่าย">บ่าย</div>
+        </div>
+      </div>
     </div>
 
     <!-- รายละเอียด -->
@@ -598,6 +630,7 @@ const LIFF_ID         = '2010068016-uNZ0EWnx';
 let lineUserId     = '';
 let selectedType   = '';
 let uploadedFileB64 = '';
+let selectedPeriod = 'เต็มวัน';
 
 // ===== LIFF Init =====
 async function initLIFF() {
@@ -659,6 +692,15 @@ document.getElementById('typeGrid').addEventListener('click', e => {
   document.getElementById('leaveType').value = selectedType;
 });
 
+document.getElementById('periodGrid').addEventListener('click', e => {
+  const card = e.target.closest('.period-card');
+  if (!card) return;
+  document.querySelectorAll('.period-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedPeriod = card.dataset.value;
+  calcDays();
+});
+
 // ===== Calculate Working Days =====
 function calcDays() {
   const s = document.getElementById('startDate').value;
@@ -678,6 +720,15 @@ function calcDays() {
     const dow = cur.getDay();
     if (dow !== 0 && dow !== 6) days++;
     cur.setDate(cur.getDate() + 1);
+  }
+
+  if (selectedPeriod !== 'เต็มวัน') {
+    if (toDateStr(start) !== toDateStr(end)) {
+      selectedPeriod = 'เต็มวัน';
+      document.querySelectorAll('.period-card').forEach(c => c.classList.toggle('selected', c.dataset.value === 'เต็มวัน'));
+    } else {
+      days = days > 0 ? 0.5 : 0;
+    }
   }
 
   const badge = document.getElementById('dayBadge');
@@ -747,7 +798,7 @@ async function submitForm() {
   btn.classList.add('loading');
   btn.disabled = true;
 
-  const days = parseInt(document.getElementById('dayCount').textContent) || 1;
+  const days = Number(document.getElementById('dayCount').textContent) || 1;
 
   const payload = {
     source:     'liff',
@@ -758,6 +809,7 @@ async function submitForm() {
     startDate:  formatThai(new Date(document.getElementById('startDate').value)),
     endDate:    formatThai(new Date(document.getElementById('endDate').value)),
     days:       days,
+    period:     selectedPeriod,
     reason:     document.getElementById('reason').value.trim(),  // อาจว่างก็ได้
     attachment: uploadedFileB64 ? 'มีเอกสารแนบ' : '',
   };
