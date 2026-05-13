@@ -56,70 +56,19 @@
       color: var(--gray-800);
     }
 
-    /* ===== Header ===== */
-    .header {
-      background: var(--white);
-      color: white;
-      padding: 18px 20px 14px;
-      position: relative;
-      overflow: hidden;
-      border-bottom: 1px solid var(--gray-200);
-    }
-    .header-top {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
-    .header-mascot {
-      font-size: 32px;
-      line-height: 1;
-    }
-    .header-org {
-      font-size: 11px;
-      color: var(--gray-400);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      font-weight: 600;
-    }
-    .header-title {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--navy);
-      margin-top: 2px;
-    }
-    .header-sub {
-      font-size: 13px;
-      color: var(--gray-600);
-      margin-top: 4px;
-    }
-    .header-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(197,165,90,0.2);
-      border: 1px solid rgba(197,165,90,0.3);
-      border-radius: 20px;
-      padding: 4px 12px;
-      margin-top: 10px;
-      font-size: 11px;
-      color: var(--gold-dark);
-      font-weight: 600;
-    }
-
     .month-strip {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 12px;
-      min-height: 70px;
+      min-height: 64px;
       margin: 0;
       padding: 12px 18px;
       background: linear-gradient(135deg, #FFD22E 0%, #FFC400 100%);
       color: var(--navy);
       font-size: 20px;
       font-weight: 800;
-      border-radius: 0 0 22px 22px;
+      border-radius: 0 0 20px 20px;
       position: relative;
       overflow: hidden;
       box-shadow: 0 10px 24px rgba(13,27,62,0.08);
@@ -143,18 +92,18 @@
 
     /* ===== Form Container ===== */
     .form-container {
-      padding: 18px 16px 100px;
+      padding: 14px 16px 100px;
       max-width: 500px;
       margin: 0 auto;
     }
 
     .hero-card {
-      min-height: 166px;
+      min-height: 156px;
       background:
         radial-gradient(circle at 88% 18%, rgba(255,210,46,0.85) 0 18%, transparent 19%),
         linear-gradient(135deg, #061A3A 0%, #073B82 68%, #0C7BFF 100%);
       border-radius: 22px;
-      padding: 22px 20px;
+      padding: 20px;
       margin-bottom: 18px;
       position: relative;
       overflow: hidden;
@@ -629,20 +578,6 @@
 
 <!-- Main Form -->
 <div id="mainForm" style="display:none">
-  <div class="header">
-    <div class="header-top">
-      <span class="header-mascot">🦙</span>
-      <div>
-        <div class="header-org" id="orgName">มหาวิทยาลัยธรรมศาสตร์</div>
-        <div class="header-title">ยื่นใบลาออนไลน์</div>
-      </div>
-    </div>
-    <div class="header-sub">กรอกข้อมูลให้ครบ ระบบจะแจ้งผลผ่าน LINE ทันที</div>
-    <div class="header-badge">
-      <span>🔒</span> ข้อมูลปลอดภัย ส่งตรงถึงหัวหน้า
-    </div>
-  </div>
-
   <div class="month-strip">
     <span class="chev">‹</span>
     <span id="monthTitle">เดือนนี้</span>
@@ -801,7 +736,7 @@
 // ===== Config =====
 const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
 const LIFF_ID         = '2010068016-uNZ0EWnx';
-const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1zP3-oj56f68nRVYOLAqgblhSP3-mTfHP/view?usp=sharing';
+const MASCOT_IMAGE_URL = '';
 
 let lineUserId     = '';
 let selectedType   = '';
