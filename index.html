@@ -76,7 +76,6 @@
     }
     .app-logo { display: flex; align-items: center; gap: 10px; }
     .app-logo .alpaca { font-size: 26px; }
-    .app-logo .title-wrap {}
     .app-logo .org { font-size: 10px; color: #8899BB; font-weight: 500; }
     .app-logo .sys { font-size: 14px; color: var(--gold); font-weight: 800; }
     .app-avatar {
@@ -109,11 +108,6 @@
     }
     .tab-btn .tab-icon { font-size: 20px; line-height: 1; }
     .tab-btn.active { color: var(--navy); }
-    .tab-btn.active .tab-icon { filter: none; }
-    .tab-btn.active::after {
-      content: '';
-      position: absolute; top: 0;
-    }
 
     /* ── Content Area ── */
     .tab-content {
@@ -171,7 +165,6 @@
       flex-shrink: 0; overflow: hidden;
     }
     .profile-big-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 12px; }
-    .profile-hero-info {}
     .profile-hero-name { font-size: 18px; font-weight: 800; color: white; }
     .profile-hero-dept { font-size: 12px; color: rgba(255,255,255,0.65); margin-top: 2px; }
     .profile-hero-id {
@@ -274,12 +267,6 @@
     .hr-table td { padding: 8px; border-bottom: 1px solid var(--gray-100); }
     .hr-table tr:last-child td { border-bottom: none; }
 
-    /* ── Submit Tab wrapper ── */
-    #tab-submit .liff-frame {
-      width: 100%; border: none; border-radius: var(--radius);
-      background: var(--white);
-    }
-
     /* ── Empty State ── */
     .empty-state {
       text-align: center; padding: 48px 24px;
@@ -299,18 +286,6 @@
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 
-    /* ── Section divider ── */
-    .sec-div {
-      font-size: 11px; font-weight: 700; color: var(--gray-400);
-      text-transform: uppercase; letter-spacing: .5px;
-      margin: 16px 0 8px;
-    }
-
-    .spinner-inline {
-      display: inline-block; width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
-      border-radius: 50%; animation: spin 0.8s linear infinite;
-    }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
@@ -357,7 +332,7 @@
     <div id="profileContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
   </div>
 
-  <div id="tab-hr" class="tab-content" style="display:none">
+  <div id="tab-hr" class="tab-content">
     <div id="hrContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
   </div>
 
@@ -397,13 +372,13 @@ let currentTab = 'submit';
 
 // ── Tab Switching ──
 function switchTab(name) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(el => {
+    el.classList.remove('active');
+    el.style.display = '';
+  });
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   const content = document.getElementById('tab-' + name);
-  if (content) {
-    content.style.display = 'block';
-    content.classList.add('active');
-  }
+  if (content) content.classList.add('active');
   const btn = document.querySelector(`.tab-btn[data-tab="${name}"]`);
   if (btn) btn.classList.add('active');
   currentTab = name;
@@ -448,8 +423,8 @@ async function init() {
     if (d.found) employee = d.employee;
   } catch (e) {}
 
-  // HR check
-  isHr = employee ? checkHrLocally() : false;
+  // HR check — ใช้ค่า isHr จาก API
+  isHr = !!(employee && employee.isHr);
   if (isHr) {
     document.getElementById('hrTabBtn').style.display = 'flex';
   }
@@ -463,17 +438,11 @@ async function init() {
   renderSubmit();
 }
 
-function checkHrLocally() {
-  // We can't check CONFIG.HR_IDS from client side, so we'll fetch later via api
-  return false;
-}
-
 // ═══════════════════════════════════════════
 // TAB: ยื่นใบลา
 // ═══════════════════════════════════════════
 function renderSubmit() {
   const el = document.getElementById('tab-submit');
-  const liffUrl = userId ? `${LIFF_FORM_URL}?userId=${encodeURIComponent(userId)}` : LIFF_FORM_URL;
 
   if (employee) {
     el.innerHTML = `
@@ -705,7 +674,7 @@ async function saveProfile() {
 }
 
 function openRegister() {
-  const url = `${GAS_URL.replace('/exec','')}/exec?mode=register&userId=${encodeURIComponent(userId)}`;
+  const url = `${GAS_URL}?mode=register&userId=${encodeURIComponent(userId)}`;
   if (typeof liff !== 'undefined' && liff.isInClient()) {
     liff.openWindow({ url, external: true });
   } else { window.open(url, '_blank'); }
