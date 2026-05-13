@@ -645,12 +645,6 @@ async function initLIFF() {
     const profile = await liff.getProfile();
     lineUserId    = profile.userId;
 
-    // Pre-fill name from LINE profile
-    const nameField = document.getElementById('name');
-    if (!nameField.value && profile.displayName) {
-      // Don't auto-fill — user should enter their real name
-    }
-
     // Default dates = today
     const today    = new Date();
     const todayStr = toDateStr(today);
@@ -668,6 +662,8 @@ async function initLIFF() {
       lineUserId   = params.get('userId') || '';
     }
 
+    await prefillRegisteredEmployee(profile.displayName);
+
   } catch (err) {
     console.error('LIFF init error:', err);
     // Browser testing fallback
@@ -679,6 +675,26 @@ async function initLIFF() {
     document.getElementById('startDate').value = today;
     document.getElementById('endDate').value   = today;
     calcDays();
+    await prefillRegisteredEmployee('');
+  }
+}
+
+async function prefillRegisteredEmployee(fallbackName) {
+  if (!lineUserId) return;
+  try {
+    const res = await fetch(`${GAS_WEB_APP_URL}?mode=api&action=employee&userId=${encodeURIComponent(lineUserId)}`);
+    const data = await res.json();
+    if (data.found && data.employee) {
+      document.getElementById('name').value = data.employee.name || '';
+      document.getElementById('department').value = data.employee.department || '';
+      return;
+    }
+  } catch (err) {
+    console.warn('Cannot load registered employee:', err);
+  }
+
+  if (fallbackName && !document.getElementById('name').value) {
+    document.getElementById('name').value = fallbackName;
   }
 }
 
