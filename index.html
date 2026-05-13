@@ -777,7 +777,27 @@ const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
 function initDecorations() {
   document.getElementById('monthTitle').textContent = getThaiMonthYear(new Date());
   const mascot = document.getElementById('heroMascot');
-  mascot.src = MASCOT_IMAGE_URL || `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(DEFAULT_MASCOT_SVG)}`;
+  const fallbackMascot = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(DEFAULT_MASCOT_SVG)}`;
+  mascot.onerror = () => {
+    mascot.onerror = null;
+    mascot.src = fallbackMascot;
+  };
+  mascot.src = getDirectImageUrl(MASCOT_IMAGE_URL) || fallbackMascot;
+}
+
+function getDirectImageUrl(url) {
+  if (!url) return '';
+  const driveMatch = String(url).match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (driveMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveMatch[1]}&sz=w600`;
+  }
+
+  const driveOpenMatch = String(url).match(/[?&]id=([^&]+)/);
+  if (String(url).includes('drive.google.com') && driveOpenMatch) {
+    return `https://drive.google.com/thumbnail?id=${driveOpenMatch[1]}&sz=w600`;
+  }
+
+  return url;
 }
 
 // ===== LIFF Init =====
