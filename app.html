@@ -65,25 +65,49 @@
     /* ── Top Header ── */
     .app-header {
       position: sticky; top: 0; z-index: 100;
-      background: var(--navy);
-      padding: 14px 16px 10px;
+      background:
+        radial-gradient(circle at 86% 22%, rgba(255,210,46,0.80) 0 16%, transparent 17%),
+        linear-gradient(135deg, #061A3A 0%, #073B82 68%, #0C7BFF 100%);
+      padding: 14px 16px 12px;
+      overflow: hidden;
+    }
+    .app-header::before {
+      content: '';
+      position: absolute; right: -18px; bottom: -26px;
+      width: 96px; height: 96px; border-radius: 50%;
+      background: rgba(255,210,46,0.12);
     }
     .app-header-inner {
       display: flex; align-items: center; justify-content: space-between;
+      position: relative; z-index: 2;
     }
     .app-logo { display: flex; align-items: center; gap: 10px; }
     .app-logo .alpaca { font-size: 26px; }
     .app-logo .org { font-size: 10px; color: #8899BB; font-weight: 500; }
-    .app-logo .sys { font-size: 14px; color: var(--gold); font-weight: 800; }
+    .app-logo .sys { font-size: 14px; color: #FFD22E; font-weight: 800; }
+    .header-mascot {
+      position: absolute; right: 54px; bottom: -3px;
+      width: 78px; height: 78px; z-index: 1; pointer-events: none;
+    }
+    .header-mascot img {
+      width: 100%; height: 100%; object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.22));
+    }
     .app-avatar {
       width: 36px; height: 36px; border-radius: 50%;
-      background: var(--royal); overflow: hidden;
+      background: rgba(255,255,255,0.15); overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      color: var(--gold); font-weight: 800; font-size: 16px;
-      border: 2px solid rgba(197,165,90,0.4);
-      flex-shrink: 0;
+      color: #FFD22E; font-weight: 800; font-size: 16px;
+      border: 2px solid rgba(197,165,90,0.5);
+      flex-shrink: 0; position: relative; z-index: 2;
     }
     .app-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .app-month-strip {
+      background: linear-gradient(135deg, #FFD22E 0%, #FFC400 100%);
+      color: var(--navy); font-size: 12px; font-weight: 700;
+      padding: 5px 16px; text-align: center;
+      position: sticky; top: 58px; z-index: 99;
+    }
 
     /* ── Bottom Tab Bar ── */
     .tab-bar {
@@ -104,7 +128,7 @@
       gap: 2px;
     }
     .tab-btn .tab-icon { font-size: 20px; line-height: 1; }
-    .tab-btn.active { color: var(--navy); }
+    .tab-btn.active { color: #FFD22E; }
 
     /* ── Content Area ── */
     .tab-content {
@@ -311,7 +335,9 @@
       </div>
       <div class="app-avatar" id="avatarEl">👤</div>
     </div>
+    <div class="header-mascot"><img id="headerMascot" alt=""></div>
   </div>
+  <div class="app-month-strip" id="appMonthStrip"></div>
 
   <!-- Tab Contents -->
   <div id="tab-submit" class="tab-content active">
@@ -361,6 +387,27 @@ const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0
 const LIFF_ID       = '2010068016-eWjYDlXc';              // LIFF ID สำหรับ portal นี้ (endpoint: https://chanun01-gif.github.io/liff/app.html)
 const LIFF_FORM_ID  = '2010068016-uNZ0EWnx';              // LIFF ID เดิม สำหรับ form ยื่นใบลา
 const LIFF_FORM_URL = `https://liff.line.me/${LIFF_FORM_ID}`;
+const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1m7qUlVGnXP2MlGVpCzocgfWFyJXhf5ze/view?usp=share_link';
+const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <defs><linearGradient id="shirt" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#0D1B3E"/><stop offset="1" stop-color="#1E3A6E"/></linearGradient></defs>
+  <circle cx="91" cy="90" r="70" fill="#FFD22E"/>
+  <circle cx="42" cy="36" r="18" fill="#F5E6C8"/><circle cx="139" cy="42" r="16" fill="#F5E6C8"/>
+  <path d="M36 74c4-34 31-56 63-52 29 4 49 27 48 58 13 7 21 21 19 37-3 29-31 49-74 49-45 0-75-20-78-49-2-18 6-34 22-43z" fill="#F4D7B5"/>
+  <path d="M44 78c9-34 36-54 70-47 16 3 29 12 38 26-15-2-27 1-37 9-15-15-35-14-71 12z" fill="#0D1B3E"/>
+  <path d="M61 103c10 13 48 14 61 0" fill="none" stroke="#7A4B35" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="67" cy="84" r="18" fill="#fff"/><circle cx="115" cy="84" r="18" fill="#fff"/>
+  <circle cx="69" cy="86" r="8" fill="#172033"/><circle cx="113" cy="86" r="8" fill="#172033"/>
+  <path d="M84 88h14" stroke="#7A4B35" stroke-width="4" stroke-linecap="round"/>
+  <path d="M49 82c15-8 27-8 38 0M96 82c15-8 28-8 39 0" stroke="#172033" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M41 132c17-17 84-17 101 0l8 42H32l9-42z" fill="url(#shirt)"/>
+  <path d="M89 123l-10 51h24l-9-51z" fill="#fff"/>
+  <path d="M143 128c14-7 23-2 26 9 4 13-4 22-18 21" fill="#F4D7B5"/>
+  <path d="M154 123v36" stroke="#F4D7B5" stroke-width="14" stroke-linecap="round"/>
+  <path d="M66 39h54l15 24H51l15-24z" fill="#1E3A6E"/>
+  <path d="M75 52h35" stroke="#fff" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="150" cy="34" r="6" fill="#fff"/>
+  <path d="M28 35l5 10 10 5-10 5-5 10-5-10-10-5 10-5 5-10z" fill="#fff"/>
+</svg>`;
 
 let userId    = '';
 let userProfile = null;
@@ -393,6 +440,18 @@ function loadTab(name) {
   if (name === 'hr')      loadHr();
 }
 
+// ── Helpers ──
+function getDirectImageUrl(url) {
+  if (!url) return '';
+  const m = String(url).match(/drive\.google\.com\/file\/d\/([^/]+)/);
+  if (m) return `https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`;
+  return url;
+}
+function getThaiMonthYear(d) {
+  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+
 // ── Init ──
 async function init() {
   try {
@@ -412,6 +471,17 @@ async function init() {
   } else if (userProfile && userProfile.displayName) {
     document.getElementById('avatarEl').textContent = userProfile.displayName.charAt(0);
   }
+
+  // header mascot
+  const mascotEl = document.getElementById('headerMascot');
+  if (mascotEl) {
+    const fallback = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(DEFAULT_MASCOT_SVG)}`;
+    mascotEl.onerror = () => { mascotEl.onerror = null; mascotEl.src = fallback; };
+    mascotEl.src = getDirectImageUrl(MASCOT_IMAGE_URL) || fallback;
+  }
+  // month strip
+  const monthEl = document.getElementById('appMonthStrip');
+  if (monthEl) monthEl.textContent = getThaiMonthYear(new Date());
 
   // load employee data
   try {
