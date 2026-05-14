@@ -657,6 +657,7 @@
         </div>
       </div>
       <input type="hidden" id="leaveType">
+      <div id="balanceHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:600;"></div>
     </div>
 
     <!-- ระยะเวลาลา -->
@@ -896,7 +897,28 @@ document.getElementById('typeGrid').addEventListener('click', e => {
   card.classList.add('selected');
   selectedType = card.dataset.value;
   document.getElementById('leaveType').value = selectedType;
+  updateBalanceHint();
 });
+
+function updateBalanceHint() {
+  const el = document.getElementById('balanceHint');
+  if (!registeredEmployee || !selectedType) { el.style.display = 'none'; return; }
+  const typeMap = {
+    'ลาพักร้อน': { bal: registeredEmployee.annualLeave,   alloc: registeredEmployee.annualAlloc   || registeredEmployee.annualMax || 20,  label: 'ลาพักร้อน', color: '#3B82F6' },
+    'ลากิจ':     { bal: registeredEmployee.personalLeave, alloc: registeredEmployee.personalAlloc || 10, label: 'ลากิจ',     color: '#14B8A6' },
+    'ลาป่วย':    { bal: registeredEmployee.sickLeave,     alloc: registeredEmployee.sickAlloc     || 30, label: 'ลาป่วย',    color: '#22C55E' },
+  };
+  const info = typeMap[selectedType];
+  if (!info) { el.style.display = 'none'; return; }
+  const bal = Number(info.bal) || 0;
+  const warn = bal <= 0;
+  el.style.display = 'block';
+  el.style.background = warn ? '#FEE2E2' : '#F0FDF4';
+  el.style.color      = warn ? '#991B1B' : '#166534';
+  el.innerHTML = warn
+    ? `⚠️ ${info.label}: วันลาคงเหลือ 0 วัน — ยื่นได้แต่หัวหน้าอาจไม่อนุมัติ`
+    : `✅ ${info.label}: คงเหลือ <strong>${bal}</strong> จาก ${info.alloc} วัน`;
+}
 
 document.getElementById('periodGrid').addEventListener('click', e => {
   const card = e.target.closest('.period-card');
