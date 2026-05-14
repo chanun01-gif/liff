@@ -239,6 +239,39 @@
     .leave-item-date { font-size: 12px; color: var(--gray-600); margin-top: 3px; }
     .leave-item-days { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
 
+    /* ── Team Action Buttons ── */
+    .team-action-row { display: flex; gap: 8px; margin-top: 8px; }
+    .btn-sm-approve {
+      flex: 1; padding: 8px; border: none; border-radius: 8px;
+      background: var(--green-bg); color: var(--green);
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-sm-approve:active { opacity: 0.7; }
+    .btn-sm-reject {
+      flex: 1; padding: 8px; border: none; border-radius: 8px;
+      background: var(--red-bg); color: var(--red);
+      font-size: 12px; font-weight: 700; font-family: inherit;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn-sm-reject:active { opacity: 0.7; }
+
+    /* ── Register Confirm Card ── */
+    .reg-confirm-card {
+      background: var(--gold-pale); border-radius: 12px; padding: 16px;
+      margin: 12px 0; display: flex; flex-direction: column; gap: 8px;
+      font-size: 13px; color: var(--navy);
+    }
+    .reg-confirm-card strong { color: var(--royal); font-weight: 700; }
+    .reg-btn-row { display: flex; gap: 8px; margin-top: 4px; }
+    .btn-ghost {
+      padding: 14px 16px; background: var(--gray-100);
+      color: var(--gray-600); border: none; border-radius: 12px;
+      font-size: 13px; font-weight: 700; font-family: inherit;
+      cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+    }
+    .btn-ghost:active { opacity: 0.7; }
+
     /* ── Profile Edit Fields ── */
     .field { margin-bottom: 14px; }
     .field:last-child { margin-bottom: 0; }
@@ -340,9 +373,7 @@
   <div class="app-month-strip" id="appMonthStrip"></div>
 
   <!-- Tab Contents -->
-  <div id="tab-submit" class="tab-content active">
-    <!-- filled by JS -->
-  </div>
+  <div id="tab-submit" class="tab-content active"></div>
 
   <div id="tab-history" class="tab-content">
     <div id="historyContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
@@ -354,6 +385,10 @@
 
   <div id="tab-profile" class="tab-content">
     <div id="profileContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
+  </div>
+
+  <div id="tab-team" class="tab-content">
+    <div id="teamContent"><div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div></div>
   </div>
 
   <div id="tab-hr" class="tab-content">
@@ -374,6 +409,9 @@
     <button class="tab-btn" data-tab="profile" onclick="switchTab('profile')">
       <span class="tab-icon">👤</span>โปรไฟล์
     </button>
+    <button class="tab-btn" data-tab="team" id="teamTabBtn" style="display:none" onclick="switchTab('team')">
+      <span class="tab-icon">👥</span>ทีม
+    </button>
     <button class="tab-btn" data-tab="hr" id="hrTabBtn" style="display:none" onclick="switchTab('hr')">
       <span class="tab-icon">📊</span>HR
     </button>
@@ -384,8 +422,8 @@
 
 <script>
 const GAS_URL       = 'https://script.google.com/macros/s/AKfycbwiyiHLBmxffS68x0EttCzdCRpJT4RkGSx9o0LHICny3l9DbYPK0gdfteHEUDRZnZJr/exec';
-const LIFF_ID       = '2010068016-eWjYDlXc';              // LIFF ID สำหรับ portal นี้ (endpoint: https://chanun01-gif.github.io/liff/app.html)
-const LIFF_FORM_ID  = '2010068016-uNZ0EWnx';              // LIFF ID เดิม สำหรับ form ยื่นใบลา
+const LIFF_ID       = '2010068016-eWjYDlXc';
+const LIFF_FORM_ID  = '2010068016-uNZ0EWnx';
 const LIFF_FORM_URL = `https://liff.line.me/${LIFF_FORM_ID}`;
 const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1m7qUlVGnXP2MlGVpCzocgfWFyJXhf5ze/view?usp=share_link';
 const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
@@ -409,11 +447,13 @@ const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
   <path d="M28 35l5 10 10 5-10 5-5 10-5-10-10-5 10-5 5-10z" fill="#fff"/>
 </svg>`;
 
-let userId    = '';
+let userId      = '';
 let userProfile = null;
-let employee  = null;
-let isHr      = false;
-let tabLoaded = { submit: false, history: false, balance: false, profile: false, hr: false };
+let employee    = null;
+let isHr        = false;
+let isManager   = false;
+let lookupResult = null;
+let tabLoaded   = { submit: false, history: false, balance: false, profile: false, team: false, hr: false };
 
 // ── Tab Switching ──
 function switchTab(name) {
@@ -437,6 +477,7 @@ function loadTab(name) {
   if (name === 'history') loadHistory();
   if (name === 'balance') renderBalance();
   if (name === 'profile') renderProfile();
+  if (name === 'team')    loadTeam();
   if (name === 'hr')      loadHr();
 }
 
@@ -451,6 +492,13 @@ function getThaiMonthYear(d) {
   const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
+function avatarHtml(size) {
+  if (userProfile && userProfile.pictureUrl)
+    return `<img src="${userProfile.pictureUrl}" alt="">`;
+  if (employee && employee.name) return employee.name.charAt(0);
+  if (userProfile && userProfile.displayName) return userProfile.displayName.charAt(0);
+  return '👤';
+}
 
 // ── Init ──
 async function init() {
@@ -464,10 +512,9 @@ async function init() {
     userId = new URLSearchParams(location.search).get('userId') || 'TEST_USER';
   }
 
-  // set avatar
+  // set header avatar
   if (userProfile && userProfile.pictureUrl) {
-    document.getElementById('avatarEl').innerHTML =
-      `<img src="${userProfile.pictureUrl}" alt="">`;
+    document.getElementById('avatarEl').innerHTML = `<img src="${userProfile.pictureUrl}" alt="">`;
   } else if (userProfile && userProfile.displayName) {
     document.getElementById('avatarEl').textContent = userProfile.displayName.charAt(0);
   }
@@ -479,7 +526,6 @@ async function init() {
     mascotEl.onerror = () => { mascotEl.onerror = null; mascotEl.src = fallback; };
     mascotEl.src = getDirectImageUrl(MASCOT_IMAGE_URL) || fallback;
   }
-  // month strip
   const monthEl = document.getElementById('appMonthStrip');
   if (monthEl) monthEl.textContent = getThaiMonthYear(new Date());
 
@@ -490,19 +536,20 @@ async function init() {
     if (d.found) employee = d.employee;
   } catch (e) {}
 
-  // HR check — ใช้ค่า isHr จาก API
-  isHr = !!(employee && employee.isHr);
-  if (isHr) {
-    document.getElementById('hrTabBtn').style.display = 'flex';
-  }
+  isHr      = !!(employee && employee.isHr);
+  isManager = !!(employee && employee.isManager);
+  updateTabVisibility();
 
-  // Show app
   document.getElementById('initLoading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 
-  // Load first tab
   tabLoaded.submit = true;
   renderSubmit();
+}
+
+function updateTabVisibility() {
+  if (isHr)      document.getElementById('hrTabBtn').style.display   = 'flex';
+  if (isManager) document.getElementById('teamTabBtn').style.display = 'flex';
 }
 
 // ═══════════════════════════════════════════
@@ -515,10 +562,10 @@ function renderSubmit() {
     el.innerHTML = `
       <div class="profile-hero" style="margin-bottom:14px">
         <div class="profile-hero-row">
-          <div class="profile-big-avatar">${userProfile&&userProfile.pictureUrl?`<img src="${userProfile.pictureUrl}" alt="">`:(employee.name||'ผ').charAt(0)}</div>
+          <div class="profile-big-avatar">${avatarHtml()}</div>
           <div class="profile-hero-info">
             <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
-            <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
+            <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}${employee.position?' · '+employee.position:''}</div>
             <div class="profile-hero-id">📋 ยินดีต้อนรับ</div>
           </div>
         </div>
@@ -546,19 +593,22 @@ function renderSubmit() {
         <button class="btn-navy" onclick="openLIFFForm()">
           <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
         </button>
+        <div style="height:10px"></div>
+        <button class="btn-ghost" style="width:100%" onclick="openRegister()">📝 ยังไม่ได้ลงทะเบียน? กดที่นี่</button>
       </div>`;
   }
 }
 
 function renderBalanceMiniCards() {
   if (!employee) return '';
+  const annualMax = employee.annualMax || 20;
   const items = [
-    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF' },
+    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max: annualMax, color:'#3B82F6', bg:'#EFF6FF' },
     { icon:'🏠',  label:'ลากิจ',   val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
-    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4' },
+    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,     max:30, color:'#22C55E', bg:'#F0FDF4' },
   ];
   return `<div class="balance-grid">${items.map(it => {
-    const pct = Math.min(100, Math.round((it.val/it.max)*100));
+    const pct = Math.min(100, it.max > 0 ? Math.round((it.val/it.max)*100) : 0);
     return `<div class="balance-card" style="background:${it.bg}">
       <span class="bc-icon">${it.icon}</span>
       <span class="bc-num" style="color:${it.color}">${it.val}</span>
@@ -601,16 +651,11 @@ function renderLeaveItem(leave) {
   const icon = typeIcons[leave.leaveType] || '📄';
   const typeBg = { 'ลาพักร้อน':'#EFF6FF','ลากิจ':'#F0FDFA','ลาป่วย':'#F0FDF4','ลาคลอด':'#FDF4FF','ลาบวช':'#FFF7ED' };
   const bg = typeBg[leave.leaveType] || '#F3F4F6';
-
   let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
   if (leave.status === 'อนุมัติ')    { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
   if (leave.status === 'ไม่อนุมัติ') { statusClass = 'rejected'; statusText = '❌ ไม่อนุมัติ'; }
-
   const days = Number(leave.days) || 0;
-  const dayText = leave.period === 'เต็มวัน' || !leave.period
-    ? `${days} วันทำการ`
-    : `${leave.period} (0.5 วัน)`;
-
+  const dayText = leave.period === 'เต็มวัน' || !leave.period ? `${days} วันทำการ` : `${leave.period} (0.5 วัน)`;
   return `<div class="leave-item">
     <div class="leave-type-icon" style="background:${bg}">${icon}</div>
     <div class="leave-item-info">
@@ -630,18 +675,19 @@ function renderLeaveItem(leave) {
 function renderBalance() {
   const el = document.getElementById('balanceContent');
   if (!employee) {
-    el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ไม่พบข้อมูลพนักงาน</div><div class="es-sub">กรุณาลงทะเบียนในระบบก่อน<br>พิมพ์ "ลงทะเบียน" ใน LINE</div></div>`;
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ไม่พบข้อมูลพนักงาน</div><div class="es-sub">กรุณาลงทะเบียนในระบบก่อน<br>กดแท็บ "โปรไฟล์" แล้วกรอกรหัสพนักงาน</div></div>`;
     return;
   }
+  const annualMax = employee.annualMax || 20;
   const types = [
-    { icon:'🏖️', label:'ลาพักร้อน', val: employee.annualLeave||0,   max:15, color:'#3B82F6', bg:'#EFF6FF' },
+    { icon:'🏖️', label:'ลาพักร้อน', val: employee.annualLeave||0,   max: annualMax, color:'#3B82F6', bg:'#EFF6FF' },
     { icon:'🏠',  label:'ลากิจ',     val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
-    { icon:'🏥',  label:'ลาป่วย',    val: employee.sickLeave||0,    max:30, color:'#22C55E', bg:'#F0FDF4' },
+    { icon:'🏥',  label:'ลาป่วย',    val: employee.sickLeave||0,     max:30, color:'#22C55E', bg:'#F0FDF4' },
   ];
   el.innerHTML = `
     <div class="profile-hero">
       <div class="profile-hero-row">
-        <div class="profile-big-avatar">${userProfile&&userProfile.pictureUrl?`<img src="${userProfile.pictureUrl}" alt="">`:(employee.name||'ผ').charAt(0)}</div>
+        <div class="profile-big-avatar">${avatarHtml()}</div>
         <div class="profile-hero-info">
           <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
           <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
@@ -679,20 +725,22 @@ function renderBalanceDetailCard(it) {
 }
 
 // ═══════════════════════════════════════════
-// TAB: โปรไฟล์
+// TAB: โปรไฟล์ (รวมการลงทะเบียนสำหรับผู้ที่ยังไม่ได้ลงทะเบียน)
 // ═══════════════════════════════════════════
 function renderProfile() {
   const el = document.getElementById('profileContent');
-  const emp = employee || {};
+  if (!employee) {
+    renderRegisterFlow(el);
+    return;
+  }
+  const emp = employee;
   el.innerHTML = `
     <div class="profile-hero">
       <div class="profile-hero-row">
-        <div class="profile-big-avatar">${userProfile && userProfile.pictureUrl
-          ? `<img src="${userProfile.pictureUrl}" alt="">`
-          : (emp.name||'ผ').charAt(0)}</div>
+        <div class="profile-big-avatar">${avatarHtml()}</div>
         <div class="profile-hero-info">
           <div class="profile-hero-name">${emp.name||userProfile&&userProfile.displayName||'ไม่ระบุชื่อ'}</div>
-          <div class="profile-hero-dept">${emp.department||'ไม่ระบุแผนก'}</div>
+          <div class="profile-hero-dept">${emp.department||'ไม่ระบุแผนก'}${emp.position?' · '+emp.position:''}</div>
           <div class="profile-hero-id">รหัส: ${emp.id||'—'}</div>
         </div>
       </div>
@@ -709,14 +757,149 @@ function renderProfile() {
       <div class="field"><label>LINE User ID</label><input class="field-input" readonly value="${userId||'—'}"></div>
       <div class="field"><label>รหัสพนักงาน</label><input class="field-input" readonly value="${emp.id||'ยังไม่ได้ลงทะเบียน'}"></div>
     </div>
-    ${emp.id ? `<button class="btn-primary" onclick="saveProfile()">💾 บันทึกข้อมูล</button>` : `
-    <button class="btn-navy" onclick="openRegister()">📝 ลงทะเบียนในระบบ</button>`}
+    <button class="btn-primary" onclick="saveProfile()">💾 บันทึกข้อมูล</button>
     <div style="height:8px"></div>`;
 }
 
+function renderRegisterFlow(el) {
+  lookupResult = null;
+  const lineDisplayName = userProfile ? (userProfile.displayName || '') : '';
+  const picHtml = userProfile && userProfile.pictureUrl
+    ? `<img src="${userProfile.pictureUrl}" alt="">`
+    : (lineDisplayName ? lineDisplayName.charAt(0) : '👤');
+
+  el.innerHTML = `
+    <div class="profile-hero" style="margin-bottom:14px">
+      <div class="profile-hero-row">
+        <div class="profile-big-avatar">${picHtml}</div>
+        <div class="profile-hero-info">
+          <div class="profile-hero-name">${lineDisplayName||'ผู้ใช้ใหม่'}</div>
+          <div class="profile-hero-dept">ยังไม่ได้ลงทะเบียนในระบบ</div>
+          <div class="profile-hero-id">📝 กรุณาลงทะเบียนก่อนใช้งาน</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">📝</span>ลงทะเบียนเข้าสู่ระบบ</div>
+      <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
+        กรอกรหัสพนักงานที่ HR กำหนดให้ เพื่อผูก LINE ของคุณเข้าสู่ระบบลา
+      </p>
+
+      <div id="regStep1">
+        <div class="field">
+          <label>รหัสพนักงาน</label>
+          <input class="field-input" id="regEmpId" placeholder="เช่น EMP001" autocomplete="off"
+            onkeydown="if(event.key==='Enter') doEmployeeLookup()">
+        </div>
+        <button class="btn-primary" id="regSearchBtn" onclick="doEmployeeLookup()">🔍 ค้นหา</button>
+      </div>
+
+      <div id="regStep2" style="display:none">
+        <p style="font-size:13px;color:var(--gray-600);margin-bottom:8px">พบข้อมูลพนักงาน — นี่คือคุณใช่หรือไม่?</p>
+        <div class="reg-confirm-card">
+          <div>👤 ชื่อ: <strong id="regConfirmName"></strong></div>
+          <div>🏢 แผนก: <strong id="regConfirmDept"></strong></div>
+          <div>💼 ตำแหน่ง: <strong id="regConfirmPos"></strong></div>
+        </div>
+        <div class="reg-btn-row">
+          <button class="btn-primary" id="regLinkBtn" onclick="doLinkAccount()" style="flex:2">✅ ใช่ ผูก LINE นี้</button>
+          <button class="btn-ghost" onclick="resetRegister()" style="flex:1">ค้นหาใหม่</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function doEmployeeLookup() {
+  const inputEl = document.getElementById('regEmpId');
+  const empId = inputEl ? inputEl.value.trim() : '';
+  if (!empId) { showToast('⚠️ กรุณากรอกรหัสพนักงาน'); return; }
+  const btn = document.getElementById('regSearchBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังค้นหา...'; }
+  try {
+    const r = await fetch(`${GAS_URL}?mode=api&action=employee_lookup&employeeId=${encodeURIComponent(empId)}`);
+    const d = await r.json();
+    if (d.found && !d.linked) {
+      lookupResult = { id: empId, name: d.name, department: d.department, position: d.position };
+      document.getElementById('regStep1').style.display = 'none';
+      document.getElementById('regStep2').style.display = 'block';
+      document.getElementById('regConfirmName').textContent = d.name || '—';
+      document.getElementById('regConfirmDept').textContent = d.department || '—';
+      document.getElementById('regConfirmPos').textContent  = d.position  || '—';
+    } else if (d.found && d.linked) {
+      showToast('⚠️ ' + (d.message || 'รหัสพนักงานนี้ผูก LINE แล้ว กรุณาติดต่อ HR'));
+      if (btn) { btn.disabled = false; btn.textContent = '🔍 ค้นหา'; }
+    } else {
+      showToast('❌ ' + (d.message || 'ไม่พบรหัสพนักงานนี้ในระบบ'));
+      if (btn) { btn.disabled = false; btn.textContent = '🔍 ค้นหา'; }
+    }
+  } catch (e) {
+    showToast('❌ เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่');
+    if (btn) { btn.disabled = false; btn.textContent = '🔍 ค้นหา'; }
+  }
+}
+
+async function doLinkAccount() {
+  if (!lookupResult) return;
+  const btn = document.getElementById('regLinkBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ source: 'liff', action: 'link_account', employeeId: lookupResult.id, userId })
+    });
+    const d = await r.json();
+    if (d.success) {
+      showToast('✅ ลงทะเบียนสำเร็จ! กำลังโหลดข้อมูล...');
+      // reload employee data
+      try {
+        const er = await fetch(`${GAS_URL}?mode=api&action=employee&userId=${encodeURIComponent(userId)}`);
+        const ed = await er.json();
+        if (ed.found) {
+          employee  = ed.employee;
+          isHr      = !!employee.isHr;
+          isManager = !!employee.isManager;
+          updateTabVisibility();
+        }
+      } catch (e2) {}
+      tabLoaded.profile = false;
+      switchTab('profile');
+      // also reload submit tab
+      tabLoaded.submit = false;
+      if (document.getElementById('tab-submit').classList.contains('active')) {
+        tabLoaded.submit = true;
+        renderSubmit();
+      }
+    } else {
+      showToast('❌ ' + (d.message || 'ไม่สำเร็จ กรุณาลองใหม่'));
+      if (btn) { btn.disabled = false; btn.textContent = '✅ ใช่ ผูก LINE นี้'; }
+    }
+  } catch (e) {
+    showToast('❌ เชื่อมต่อไม่สำเร็จ');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ ใช่ ผูก LINE นี้'; }
+  }
+}
+
+function resetRegister() {
+  lookupResult = null;
+  const step1 = document.getElementById('regStep1');
+  const step2 = document.getElementById('regStep2');
+  const inputEl = document.getElementById('regEmpId');
+  const btn = document.getElementById('regSearchBtn');
+  if (step1)   step1.style.display = 'block';
+  if (step2)   step2.style.display = 'none';
+  if (inputEl) inputEl.value = '';
+  if (btn)     { btn.disabled = false; btn.textContent = '🔍 ค้นหา'; }
+}
+
+function openRegister() {
+  tabLoaded.profile = false;
+  switchTab('profile');
+}
+
 async function saveProfile() {
-  const name = document.getElementById('pName').value.trim();
-  const dept = document.getElementById('pDept').value.trim();
+  const name  = document.getElementById('pName').value.trim();
+  const dept  = document.getElementById('pDept').value.trim();
   const email = document.getElementById('pEmail').value.trim();
   const phone = document.getElementById('pPhone').value.trim();
   if (!name || !dept) { showToast('⚠️ กรุณากรอกชื่อและแผนก'); return; }
@@ -724,11 +907,11 @@ async function saveProfile() {
   const payload = {
     source: 'liff', action: 'register',
     userId, name, department: dept, email, phone,
-    employeeId: employee ? employee.id : '',
-    managerUserId: employee ? employee.managerUserId : '',
-    annualLeave: employee ? employee.annualLeave : '',
-    personalLeave: employee ? employee.personalLeave : '',
-    sickLeave: employee ? employee.sickLeave : '',
+    employeeId:     employee ? employee.id : '',
+    managerUserId:  employee ? employee.managerUserId : '',
+    annualLeave:    employee ? employee.annualLeave : '',
+    personalLeave:  employee ? employee.personalLeave : '',
+    sickLeave:      employee ? employee.sickLeave : '',
   };
   try {
     const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
@@ -740,11 +923,89 @@ async function saveProfile() {
   } catch (e) { showToast('❌ เชื่อมต่อไม่สำเร็จ'); }
 }
 
-function openRegister() {
-  const url = `${GAS_URL}?mode=register&userId=${encodeURIComponent(userId)}`;
+// ═══════════════════════════════════════════
+// TAB: ทีมลา (สำหรับหัวหน้า)
+// ═══════════════════════════════════════════
+async function loadTeam() {
+  const el = document.getElementById('teamContent');
+  el.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div>';
+  try {
+    const r = await fetch(`${GAS_URL}?mode=api&action=team_requests&managerId=${encodeURIComponent(userId)}`);
+    const d = await r.json();
+    if (!d.leaves || d.leaves.length === 0) {
+      el.innerHTML = '<div class="empty-state"><div class="es-icon">👥</div><div class="es-title">ไม่มีรายการ</div><div class="es-sub">ยังไม่มีคำขอลาในทีม</div></div>';
+      return;
+    }
+    const isPending = l => ['รอการอนุมัติ','รออนุมัติระดับ 2'].includes(l.status);
+    const pending   = d.leaves.filter(isPending);
+    const others    = d.leaves.filter(l => !isPending(l));
+    let html = '';
+    if (pending.length > 0) {
+      html += `<div class="card"><div class="card-title"><span class="ct-icon">⏳</span>รออนุมัติ ${pending.length} รายการ</div>${pending.map(l => renderTeamItem(l, true)).join('')}</div>`;
+    }
+    if (others.length > 0) {
+      html += `<div class="card"><div class="card-title"><span class="ct-icon">📜</span>ประวัติล่าสุด</div>${others.slice(0,20).map(l => renderTeamItem(l, false)).join('')}</div>`;
+    }
+    el.innerHTML = html;
+  } catch (e) {
+    el.innerHTML = '<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div><div class="es-sub">กรุณาลองใหม่</div></div>';
+  }
+}
+
+function renderTeamItem(leave, showActions) {
+  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
+  const icon = typeIcons[leave.leaveType] || '📄';
+  let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
+  if (leave.status === 'อนุมัติ')             { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
+  if (leave.status === 'ไม่อนุมัติ')          { statusClass = 'rejected'; statusText = '❌ ไม่อนุมัติ'; }
+  if (leave.status === 'รออนุมัติระดับ 2')    { statusClass = 'pending';  statusText = '⏳ รอระดับ 2'; }
+  const days = Number(leave.days) || 0;
+  const dayText = leave.period === 'เต็มวัน' || !leave.period ? `${days} วัน` : leave.period;
+  const actHtml = showActions ? `
+    <div class="team-action-row">
+      <button class="btn-sm-approve" onclick="approveFromLiff('${leave.id}')">✅ อนุมัติ</button>
+      <button class="btn-sm-reject"  onclick="rejectFromLiff('${leave.id}')">❌ ไม่อนุมัติ</button>
+    </div>` : '';
+  return `<div class="leave-item">
+    <div class="leave-type-icon" style="background:#F3F4F6">${icon}</div>
+    <div class="leave-item-info" style="width:100%">
+      <div class="leave-item-top">
+        <div class="leave-item-type">${leave.name||'—'} · ${leave.leaveType||'—'}</div>
+        <div class="status-pill ${statusClass}">${statusText}</div>
+      </div>
+      <div class="leave-item-date">📅 ${leave.startDate}${leave.endDate && leave.endDate !== leave.startDate ? ' — ' + leave.endDate : ''}</div>
+      <div class="leave-item-days">⏱ ${dayText}${leave.department ? ' · ' + leave.department : ''}</div>
+      ${actHtml}
+    </div>
+  </div>`;
+}
+
+async function approveFromLiff(leaveId) {
   if (typeof liff !== 'undefined' && liff.isInClient()) {
-    liff.openWindow({ url, external: true });
-  } else { window.open(url, '_blank'); }
+    try {
+      await liff.sendMessages([{ type: 'text', text: 'อนุมัติ ' + leaveId }]);
+      showToast('✅ ส่งคำขออนุมัติแล้ว รอการยืนยันในแชท');
+      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 3000);
+    } catch (e) {
+      showToast('💡 พิมพ์ "อนุมัติ ' + leaveId + '" ในแชท LINE');
+    }
+  } else {
+    showToast('💡 พิมพ์ "อนุมัติ ' + leaveId + '" ในแชท LINE');
+  }
+}
+
+async function rejectFromLiff(leaveId) {
+  if (typeof liff !== 'undefined' && liff.isInClient()) {
+    try {
+      await liff.sendMessages([{ type: 'text', text: 'ไม่อนุมัติ ' + leaveId }]);
+      showToast('✅ ส่งคำขอไม่อนุมัติแล้ว รอการยืนยันในแชท');
+      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 3000);
+    } catch (e) {
+      showToast('💡 พิมพ์ "ไม่อนุมัติ ' + leaveId + '" ในแชท LINE');
+    }
+  } else {
+    showToast('💡 พิมพ์ "ไม่อนุมัติ ' + leaveId + '" ในแชท LINE');
+  }
 }
 
 // ═══════════════════════════════════════════
