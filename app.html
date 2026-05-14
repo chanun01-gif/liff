@@ -129,6 +129,21 @@
     }
     .tab-btn .tab-icon { font-size: 20px; line-height: 1; }
     .tab-btn.active { color: #FFD22E; }
+    .tab-btn.locked { opacity: 0.32; pointer-events: none; }
+    .tab-btn.profile-glow .tab-icon::after {
+      content: ''; display: block;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #EF4444;
+      position: absolute; top: 6px; right: calc(50% - 14px);
+    }
+    .tab-btn { position: relative; }
+    .reg-gate-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 20px; text-align: center;
+    }
+    .reg-gate-wrap .rg-lock { font-size: 48px; margin-bottom: 14px; }
+    .reg-gate-wrap .rg-title { font-size: 17px; font-weight: 800; color: var(--navy); margin-bottom: 8px; }
+    .reg-gate-wrap .rg-sub { font-size: 13px; color: var(--gray-600); line-height: 1.7; margin-bottom: 20px; }
 
     /* ── Content Area ── */
     .tab-content {
@@ -457,6 +472,10 @@ let tabLoaded   = { submit: false, history: false, balance: false, profile: fals
 
 // ── Tab Switching ──
 function switchTab(name) {
+  if (!employee && name !== 'profile') {
+    showToast('⚠️ กรุณาลงทะเบียนก่อนใช้งาน');
+    name = 'profile';
+  }
   document.querySelectorAll('.tab-content').forEach(el => {
     el.classList.remove('active');
     el.style.display = '';
@@ -492,7 +511,7 @@ function getThaiMonthYear(d) {
   const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
   return `${months[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
-function avatarHtml(size) {
+function avatarHtml() {
   if (userProfile && userProfile.pictureUrl)
     return `<img src="${userProfile.pictureUrl}" alt="">`;
   if (employee && employee.name) return employee.name.charAt(0);
@@ -538,18 +557,32 @@ async function init() {
 
   isHr      = !!(employee && employee.isHr);
   isManager = !!(employee && employee.isManager);
-  updateTabVisibility();
+  enforceRegistrationGate();
 
   document.getElementById('initLoading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
 
-  tabLoaded.submit = true;
-  renderSubmit();
+  if (!employee) {
+    switchTab('profile');
+  } else {
+    tabLoaded.submit = true;
+    renderSubmit();
+  }
 }
 
-function updateTabVisibility() {
-  if (isHr)      document.getElementById('hrTabBtn').style.display   = 'flex';
-  if (isManager) document.getElementById('teamTabBtn').style.display = 'flex';
+function enforceRegistrationGate() {
+  const locked = !employee;
+  const blockedTabs = ['submit', 'history', 'balance', 'team', 'hr'];
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    const tab = btn.dataset.tab;
+    if (blockedTabs.includes(tab)) btn.classList.toggle('locked', locked);
+  });
+  const profileBtn = document.querySelector('.tab-btn[data-tab="profile"]');
+  if (profileBtn) profileBtn.classList.toggle('profile-glow', locked);
+  if (!locked) {
+    if (isHr)      document.getElementById('hrTabBtn').style.display   = 'flex';
+    if (isManager) document.getElementById('teamTabBtn').style.display = 'flex';
+  }
 }
 
 // ═══════════════════════════════════════════
@@ -584,17 +617,13 @@ function renderSubmit() {
       </div>`;
   } else {
     el.innerHTML = `
-      <div class="card">
-        <div class="card-title"><span class="ct-icon">📋</span>ยื่นใบลา</div>
-        <p style="font-size:13px;color:var(--gray-600);line-height:1.7;margin-bottom:16px">
-          กดปุ่มด้านล่างเพื่อกรอกแบบฟอร์มยื่นใบลา<br>
-          ระบบจะแจ้งหัวหน้าทันทีหลังส่งคำขอ
-        </p>
-        <button class="btn-navy" onclick="openLIFFForm()">
-          <span>🦙</span><span>กรอกใบลาเดี๋ยวนี้</span>
+      <div class="reg-gate-wrap">
+        <div class="rg-lock">🔒</div>
+        <div class="rg-title">กรุณาลงทะเบียนก่อนใช้งาน</div>
+        <div class="rg-sub">ต้องลงทะเบียนในระบบก่อน<br>จึงจะยื่นใบลาได้</div>
+        <button class="btn-primary" style="max-width:220px" onclick="switchTab('profile')">
+          📝 ไปลงทะเบียน
         </button>
-        <div style="height:10px"></div>
-        <button class="btn-ghost" style="width:100%" onclick="openRegister()">📝 ยังไม่ได้ลงทะเบียน? กดที่นี่</button>
       </div>`;
   }
 }
@@ -632,6 +661,10 @@ function openLIFFForm() {
 // ═══════════════════════════════════════════
 async function loadHistory() {
   const el = document.getElementById('historyContent');
+  if (!employee) {
+    el.innerHTML = `<div class="reg-gate-wrap"><div class="rg-lock">🔒</div><div class="rg-title">กรุณาลงทะเบียนก่อน</div><div class="rg-sub">ต้องลงทะเบียนก่อนดูประวัติการลา</div><button class="btn-primary" style="max-width:220px" onclick="switchTab('profile')">📝 ไปลงทะเบียน</button></div>`;
+    return;
+  }
   el.innerHTML = '<div class="empty-state"><div class="es-icon">⏳</div><div class="es-title">กำลังโหลด...</div></div>';
   try {
     const r = await fetch(`${GAS_URL}?mode=api&action=my_leaves&userId=${encodeURIComponent(userId)}&limit=30`);
@@ -891,17 +924,12 @@ async function doLinkAccount() {
           employee  = ed.employee;
           isHr      = !!employee.isHr;
           isManager = !!employee.isManager;
-          updateTabVisibility();
         }
       } catch (e2) {}
+      enforceRegistrationGate();
       tabLoaded.profile = false;
       switchTab('profile');
-      // also reload submit tab
       tabLoaded.submit = false;
-      if (document.getElementById('tab-submit').classList.contains('active')) {
-        tabLoaded.submit = true;
-        renderSubmit();
-      }
     } else {
       showToast('❌ ' + (d.message || 'ไม่สำเร็จ กรุณาลองใหม่'));
       if (btn) { btn.disabled = false; btn.textContent = '✅ ใช่ ผูก LINE นี้'; }
@@ -941,9 +969,9 @@ async function saveProfile() {
     userId, name, department: dept, email, phone,
     employeeId:     employee ? employee.id : '',
     managerUserId:  employee ? employee.managerUserId : '',
-    annualLeave:    employee ? employee.annualLeave : '',
-    personalLeave:  employee ? employee.personalLeave : '',
-    sickLeave:      employee ? employee.sickLeave : '',
+    annualAlloc:    employee ? employee.annualAlloc : '',
+    personalAlloc:  employee ? employee.personalAlloc : '',
+    sickAlloc:      employee ? employee.sickAlloc : '',
   };
   try {
     const r = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
