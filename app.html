@@ -603,9 +603,9 @@ function renderBalanceMiniCards() {
   if (!employee) return '';
   const annualMax = employee.annualMax || 20;
   const items = [
-    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max: annualMax, color:'#3B82F6', bg:'#EFF6FF' },
-    { icon:'🏠',  label:'ลากิจ',   val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
-    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,     max:30, color:'#22C55E', bg:'#F0FDF4' },
+    { icon:'🏖️', label:'พักร้อน', val: employee.annualLeave||0,   max: annualMax,                   color:'#3B82F6', bg:'#EFF6FF' },
+    { icon:'🏠',  label:'ลากิจ',   val: employee.personalLeave||0, max: employee.personalAlloc||10,  color:'#14B8A6', bg:'#F0FDFA' },
+    { icon:'🏥',  label:'ลาป่วย',  val: employee.sickLeave||0,     max: employee.sickAlloc||30,      color:'#22C55E', bg:'#F0FDF4' },
   ];
   return `<div class="balance-grid">${items.map(it => {
     const pct = Math.min(100, it.max > 0 ? Math.round((it.val/it.max)*100) : 0);
@@ -678,12 +678,38 @@ function renderBalance() {
     el.innerHTML = `<div class="empty-state"><div class="es-icon">📋</div><div class="es-title">ไม่พบข้อมูลพนักงาน</div><div class="es-sub">กรุณาลงทะเบียนในระบบก่อน<br>กดแท็บ "โปรไฟล์" แล้วกรอกรหัสพนักงาน</div></div>`;
     return;
   }
+
+  const fy      = employee.fiscalYear || (new Date().getFullYear() + 543);
   const annualMax = employee.annualMax || 20;
+
+  // ใช้ข้อมูล balance ที่ละเอียดถ้ามี ไม่งั้นใช้ legacy fields
   const types = [
-    { icon:'🏖️', label:'ลาพักร้อน', val: employee.annualLeave||0,   max: annualMax, color:'#3B82F6', bg:'#EFF6FF' },
-    { icon:'🏠',  label:'ลากิจ',     val: employee.personalLeave||0, max:10, color:'#14B8A6', bg:'#F0FDFA' },
-    { icon:'🏥',  label:'ลาป่วย',    val: employee.sickLeave||0,     max:30, color:'#22C55E', bg:'#F0FDF4' },
+    {
+      icon: '🏖️', label: 'ลาพักร้อน', color: '#3B82F6', bg: '#EFF6FF',
+      alloc:    employee.annualAlloc    || annualMax,
+      carryover:employee.annualCarryover|| 0,
+      used:     employee.annualUsed     || 0,
+      balance:  employee.annualLeave    || 0,
+      max:      annualMax,
+    },
+    {
+      icon: '🏠', label: 'ลากิจ', color: '#14B8A6', bg: '#F0FDFA',
+      alloc:    employee.personalAlloc  || 10,
+      carryover:0,
+      used:     employee.personalUsed   || 0,
+      balance:  employee.personalLeave  || 0,
+      max:      employee.personalAlloc  || 10,
+    },
+    {
+      icon: '🏥', label: 'ลาป่วย', color: '#22C55E', bg: '#F0FDF4',
+      alloc:    employee.sickAlloc      || 30,
+      carryover:0,
+      used:     employee.sickUsed       || 0,
+      balance:  employee.sickLeave      || 0,
+      max:      employee.sickAlloc      || 30,
+    },
   ];
+
   el.innerHTML = `
     <div class="profile-hero">
       <div class="profile-hero-row">
@@ -691,7 +717,7 @@ function renderBalance() {
         <div class="profile-hero-info">
           <div class="profile-hero-name">${employee.name||'ไม่ระบุชื่อ'}</div>
           <div class="profile-hero-dept">${employee.department||'ไม่ระบุแผนก'}</div>
-          <div class="profile-hero-id">🗓 วันลาคงเหลือ ปีงบประมาณ ${new Date().getFullYear()+543}</div>
+          <div class="profile-hero-id">🗓 ปีงบประมาณ ${fy}</div>
         </div>
       </div>
     </div>
@@ -699,27 +725,33 @@ function renderBalance() {
 }
 
 function renderBalanceDetailCard(it) {
-  const pct = it.max > 0 ? Math.min(100, Math.round((it.val/it.max)*100)) : 0;
-  const used = it.max - it.val;
+  const pct = it.max > 0 ? Math.min(100, Math.round((it.balance / it.max) * 100)) : 0;
+  const carryoverRow = it.carryover > 0
+    ? `<div style="display:flex;justify-content:space-between;margin-top:4px">
+        <span style="font-size:11px;color:#6B7280">สะสมจากปีก่อน</span>
+        <span style="font-size:11px;font-weight:700;color:${it.color}">+${it.carryover} วัน</span>
+       </div>`
+    : '';
   return `<div class="card" style="border-left:4px solid ${it.color}">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
       <div style="font-size:28px">${it.icon}</div>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:700;color:var(--navy)">${it.label}</div>
-        <div style="font-size:11px;color:var(--gray-400);margin-top:2px">ใช้ไปแล้ว ${used} วัน จากทั้งหมด ${it.max} วัน</div>
+        <div style="font-size:11px;color:#6B7280;margin-top:2px">โควตา ${it.alloc} วัน · ใช้ไป ${it.used} วัน</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:32px;font-weight:800;color:${it.color};line-height:1">${it.val}</div>
-        <div style="font-size:11px;color:var(--gray-400)">วันคงเหลือ</div>
+        <div style="font-size:32px;font-weight:800;color:${it.color};line-height:1">${it.balance}</div>
+        <div style="font-size:11px;color:#6B7280">วันคงเหลือ</div>
       </div>
     </div>
-    <div style="background:#E5E7EB;border-radius:6px;height:8px;overflow:hidden">
+    ${carryoverRow}
+    <div style="background:#E5E7EB;border-radius:6px;height:8px;overflow:hidden;margin-top:8px">
       <div style="height:100%;width:${pct}%;background:${it.color};border-radius:6px;transition:width 0.6s"></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:4px">
-      <span style="font-size:10px;color:var(--gray-400)">0</span>
-      <span style="font-size:10px;color:${it.color};font-weight:700">${pct}% คงเหลือ</span>
-      <span style="font-size:10px;color:var(--gray-400)">${it.max}</span>
+      <span style="font-size:10px;color:#9CA3AF">0</span>
+      <span style="font-size:10px;color:${it.color};font-weight:700">${pct}%</span>
+      <span style="font-size:10px;color:#9CA3AF">${it.max}</span>
     </div>
   </div>`;
 }
