@@ -680,9 +680,9 @@ async function loadHistory() {
 }
 
 function renderLeaveItem(leave) {
-  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
+  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอดบุตร':'👶','ลาเพื่อดูแลบุตร':'👨‍👩‍👧','ลาอุปสมบท':'🙏','ลาไปปฏิบัติธรรม':'🧘','ลาติดตามคู่สมรส':'💑','ลาเข้ารับการตรวจเลือก':'🎖️','ลาไปฟื้นฟูสมรรถภาพ':'🏃' };
   const icon = typeIcons[leave.leaveType] || '📄';
-  const typeBg = { 'ลาพักร้อน':'#EFF6FF','ลากิจ':'#F0FDFA','ลาป่วย':'#F0FDF4','ลาคลอด':'#FDF4FF','ลาบวช':'#FFF7ED' };
+  const typeBg = { 'ลาพักร้อน':'#EFF6FF','ลากิจ':'#F0FDFA','ลาป่วย':'#F0FDF4','ลาคลอดบุตร':'#FDF4FF','ลาอุปสมบท':'#FFF7ED','ลาไปปฏิบัติธรรม':'#F5F3FF','ลาเพื่อดูแลบุตร':'#FFF0F6' };
   const bg = typeBg[leave.leaveType] || '#F3F4F6';
   let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
   if (leave.status === 'อนุมัติ')    { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
@@ -817,6 +817,21 @@ function renderProfile() {
       <div class="field"><label>อีเมล</label><input class="field-input" id="pEmail" type="email" value="${emp.email||''}" placeholder="อีเมล"></div>
       <div class="field"><label>เบอร์โทรศัพท์</label><input class="field-input" id="pPhone" value="${emp.phone||''}" placeholder="เบอร์โทร"></div>
     </div>
+    ${emp.seniority ? `
+    <div class="card">
+      <div class="card-title"><span class="ct-icon">⏱</span>อายุงาน</div>
+      <div style="display:flex;gap:0;margin-bottom:10px">
+        ${[
+          { val: emp.seniority.years,  unit: 'ปี',   color: '#3B82F6', bg: '#EFF6FF' },
+          { val: emp.seniority.months, unit: 'เดือน', color: '#14B8A6', bg: '#F0FDFA' },
+          { val: emp.seniority.days,   unit: 'วัน',   color: '#22C55E', bg: '#F0FDF4' },
+        ].map(it => `<div style="flex:1;text-align:center;background:${it.bg};border-radius:10px;padding:12px 4px;margin:0 4px">
+          <div style="font-size:28px;font-weight:800;color:${it.color};line-height:1">${it.val}</div>
+          <div style="font-size:11px;color:var(--gray-600);margin-top:3px">${it.unit}</div>
+        </div>`).join('')}
+      </div>
+      ${emp.hireDate ? `<div style="font-size:12px;color:var(--gray-600)">📅 วันเริ่มงาน: ${emp.hireDate}</div>` : ''}
+    </div>` : ''}
     <div class="card">
       <div class="card-title"><span class="ct-icon">🔒</span>ข้อมูลระบบ (แก้ไขไม่ได้)</div>
       <div class="field"><label>LINE User ID</label><input class="field-input" readonly value="${userId||'—'}"></div>
@@ -1013,7 +1028,7 @@ async function loadTeam() {
 }
 
 function renderTeamItem(leave, showActions) {
-  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอด':'👶','ลาบวช':'🙏' };
+  const typeIcons = { 'ลาพักร้อน':'🏖️','ลากิจ':'🏠','ลาป่วย':'🏥','ลาคลอดบุตร':'👶','ลาเพื่อดูแลบุตร':'👨‍👩‍👧','ลาอุปสมบท':'🙏','ลาไปปฏิบัติธรรม':'🧘','ลาติดตามคู่สมรส':'💑','ลาเข้ารับการตรวจเลือก':'🎖️','ลาไปฟื้นฟูสมรรถภาพ':'🏃' };
   const icon = typeIcons[leave.leaveType] || '📄';
   let statusClass = 'pending', statusText = '⏳ รอดำเนินการ';
   if (leave.status === 'อนุมัติ')             { statusClass = 'approved'; statusText = '✅ อนุมัติ'; }
