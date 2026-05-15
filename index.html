@@ -1003,6 +1003,8 @@ function getDirectImageUrl(url) {
 }
 
 // ===== LIFF Init =====
+let liffGroupId = '';  // groupId ของห้องแชทที่เปิด LIFF
+
 async function initLIFF() {
   initDecorations();
   try {
@@ -1012,6 +1014,12 @@ async function initLIFF() {
       liff.login();
       return;
     }
+
+    // จับ group/room context สำหรับ push notification
+    try {
+      const ctx  = liff.getContext ? liff.getContext() : null;
+      liffGroupId = (ctx && (ctx.groupId || ctx.roomId)) || '';
+    } catch (e) { liffGroupId = ''; }
 
     const profile = await liff.getProfile();
     lineUserId    = profile.userId;
@@ -1344,6 +1352,7 @@ async function submitForm() {
   const payload = {
     source:        'liff',
     userId:        lineUserId,
+    groupId:       liffGroupId,          // ส่ง groupId เพื่อให้ push ไปยังกลุ่มได้
     name:          (registeredEmployee ? registeredEmployee.name : document.getElementById('name').value.trim()),
     department:    (registeredEmployee ? registeredEmployee.department : document.getElementById('department').value.trim()),
     leaveType:     selectedType,
