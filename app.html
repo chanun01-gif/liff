@@ -357,6 +357,34 @@
     .toast.show { opacity: 1; transform: translateY(0); }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Employee Accordion ── */
+    .emp-accordion-item { border-bottom: 1px solid var(--gray-100); }
+    .emp-accordion-item:last-child { border-bottom: none; }
+    .emp-accordion-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 0; cursor: pointer; user-select: none;
+    }
+    .emp-accordion-avatar {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: var(--navy); color: var(--gold);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; flex-shrink: 0;
+    }
+    .emp-accordion-info { flex: 1; min-width: 0; }
+    .emp-accordion-name { font-size: 13px; font-weight: 700; color: var(--navy); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-accordion-dept { font-size: 11px; color: var(--gray-600); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .emp-accordion-arrow { margin-left: auto; font-size: 14px; color: var(--gray-400); transition: transform 0.25s; flex-shrink: 0; }
+    .emp-accordion-item.open .emp-accordion-arrow { transform: rotate(180deg); }
+    .emp-accordion-body { display: none; padding: 0 0 14px 46px; }
+    .emp-accordion-item.open .emp-accordion-body { display: block; }
+    .emp-leave-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+    .emp-leave-pill { padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+    .emp-leave-history-item {
+      font-size: 12px; padding: 7px 10px; border-radius: 8px;
+      background: var(--gray-50); margin-top: 5px; position: relative;
+      overflow: hidden;
+    }
   </style>
 </head>
 <body>
@@ -1126,6 +1154,7 @@ async function loadHr() {
           ${Object.entries(s.byType).map(([k,v])=>`<tr><td>${k}</td><td>${v}</td></tr>`).join('')}
         </table>
       </div>` : ''}
+      ${renderEmpAccordion(d.empList || [], d.leaves || [])}
       ${d.leaves && d.leaves.length ? `
       <div class="card">
         <div class="card-title"><span class="ct-icon">📜</span>รายการล่าสุด (100 รายการ)</div>
@@ -1142,6 +1171,59 @@ async function loadHr() {
   } catch (e) {
     el.innerHTML = `<div class="empty-state"><div class="es-icon">⚠️</div><div class="es-title">โหลดข้อมูลไม่สำเร็จ</div></div>`;
   }
+}
+
+function renderEmpAccordion(empList, leaves) {
+  if (!empList || empList.length === 0) return '';
+  const isPend = st => ['รอการอนุมัติ','รออนุมัติระดับ 2'].includes(st || '');
+  const stColor = st => st === 'อนุมัติ' ? '#15803D' : st === 'ไม่อนุมัติ' ? '#C0392B' : '#D4880F';
+  const stBg    = st => st === 'อนุมัติ' ? '#F0FDF4' : st === 'ไม่อนุมัติ' ? '#FEE2E2' : '#FEF6E3';
+
+  const items = empList.map((emp, idx) => {
+    const empLeaves = leaves.filter(l =>
+      (emp.userId && l.userId === emp.userId) ||
+      (!emp.userId && l.name && l.name === emp.name)
+    );
+    const approved = empLeaves.filter(l => l.status === 'อนุมัติ').length;
+    const pending  = empLeaves.filter(l => isPend(l.status)).length;
+    const total    = empLeaves.length;
+
+    const histRows = empLeaves.slice(0, 5).map(l =>
+      `<div class="emp-leave-history-item">
+        <strong>${l.leaveType||'—'}</strong> · ${String(l.startDate||'')}${l.days ? ' · '+l.days+' วัน' : ''}
+        <span style="float:right;font-size:10px;padding:2px 6px;border-radius:999px;background:${stBg(l.status)};color:${stColor(l.status)}">${l.status||'—'}</span>
+      </div>`
+    ).join('');
+
+    return `<div class="emp-accordion-item" id="emp-acc-${idx}">
+      <div class="emp-accordion-header" onclick="toggleEmpAccordion(${idx})">
+        <div class="emp-accordion-avatar">${(emp.name||'ผ').trim().charAt(0)}</div>
+        <div class="emp-accordion-info">
+          <div class="emp-accordion-name">${emp.name||'—'}</div>
+          <div class="emp-accordion-dept">${emp.dept||'ไม่ระบุแผนก'}${emp.position?' · '+emp.position:''}</div>
+        </div>
+        <span class="emp-accordion-arrow">▾</span>
+      </div>
+      <div class="emp-accordion-body" id="emp-body-${idx}">
+        <div class="emp-leave-row">
+          <span class="emp-leave-pill" style="background:#F0FDF4;color:#15803D">✅ ${approved}</span>
+          <span class="emp-leave-pill" style="background:#FEF6E3;color:#D4880F">⏳ ${pending}</span>
+          <span class="emp-leave-pill" style="background:#EFF6FF;color:#1D4ED8">📋 ${total} รายการ</span>
+        </div>
+        ${histRows || '<div style="font-size:12px;color:var(--gray-400)">ยังไม่มีประวัติการลา</div>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="card">
+    <div class="card-title"><span class="ct-icon">👥</span>รายชื่อพนักงาน (${empList.length} คน)</div>
+    ${items}
+  </div>`;
+}
+
+function toggleEmpAccordion(idx) {
+  const item = document.getElementById('emp-acc-' + idx);
+  if (item) item.classList.toggle('open');
 }
 
 // ── Toast ──
