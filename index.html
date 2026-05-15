@@ -345,7 +345,7 @@
     /* ===== Leave Type Grid ===== */
     .type-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
     .type-card {
@@ -579,6 +579,64 @@
     }
     .btn-go-register:active { opacity: 0.85; }
 
+    /* ===== Calendar ===== */
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .cal-nav-btn {
+      width: 36px; height: 36px; border: none; border-radius: 50%;
+      background: var(--gray-100); font-size: 20px; font-weight: 700;
+      color: var(--navy); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cal-nav-btn:active { background: var(--gold-light); }
+    .cal-month-label { font-size: 15px; font-weight: 800; color: var(--navy); }
+    .cal-day-headers {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      margin-bottom: 4px;
+    }
+    .cal-day-headers > div {
+      text-align: center; font-size: 11px; font-weight: 700;
+      color: var(--gray-600); padding: 4px 0;
+    }
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+    }
+    .cal-cell {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      border-radius: 8px; font-size: 13px; font-weight: 600;
+      cursor: pointer; color: var(--gray-800); transition: background 0.15s;
+    }
+    .cal-cell:not(.empty):not(.weekend):not(.past):hover { background: var(--gold-light); }
+    .cal-cell:not(.empty):not(.weekend):not(.past):active { transform: scale(0.88); }
+    .cal-cell.empty { cursor: default; }
+    .cal-cell.weekend { color: var(--red); opacity: 0.45; cursor: default; }
+    .cal-cell.past { opacity: 0.28; cursor: default; }
+    .cal-cell.selected {
+      background: var(--gold) !important; color: var(--navy); font-weight: 800;
+      box-shadow: 0 2px 8px rgba(197,165,90,0.4);
+    }
+    .cal-cell.today:not(.selected) {
+      background: var(--gold-pale); color: var(--navy); font-weight: 800;
+    }
+    .cal-selected-wrap { margin-top: 12px; }
+    .cal-selected-label {
+      font-size: 12px; font-weight: 700; color: var(--navy); margin-bottom: 8px;
+    }
+    .cal-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .date-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 5px 10px; border-radius: 999px;
+      background: var(--gold-pale); border: 1px solid rgba(197,165,90,0.35);
+      font-size: 11px; font-weight: 700; color: var(--navy);
+    }
+    .date-chip-x {
+      cursor: pointer; font-size: 14px; line-height: 1;
+      color: var(--gray-600); font-weight: 400;
+    }
+    .period-card.disabled { opacity: 0.38; pointer-events: none; }
+
     /* ===== Misc ===== */
     .info-note {
       display: flex;
@@ -687,47 +745,77 @@
           <span class="icon">🏖️</span><span class="name">ลาพักร้อน</span>
         </div>
         <div class="type-card" data-value="ลากิจ">
-          <span class="icon">🏠</span><span class="name">ลากิจ</span>
+          <span class="icon">🏠</span><span class="name">ลากิจส่วนตัว</span>
         </div>
         <div class="type-card" data-value="ลาป่วย">
           <span class="icon">🏥</span><span class="name">ลาป่วย</span>
         </div>
-        <div class="type-card" data-value="ลาคลอด">
-          <span class="icon">👶</span><span class="name">ลาคลอด</span>
+        <div class="type-card" data-value="ลาคลอดบุตร">
+          <span class="icon">👶</span><span class="name">ลาคลอดบุตร</span>
         </div>
-        <div class="type-card" data-value="ลาบวช">
-          <span class="icon">🙏</span><span class="name">ลาบวช</span>
+        <div class="type-card" data-value="ลาเพื่อดูแลบุตร">
+          <span class="icon">👨‍👩‍👧</span><span class="name">ดูแลบุตร</span>
         </div>
-        <div class="type-card" data-value="ลาอื่นๆ">
-          <span class="icon">📄</span><span class="name">อื่น ๆ</span>
+        <div class="type-card" data-value="ลาอุปสมบท">
+          <span class="icon">🙏</span><span class="name">ลาอุปสมบท</span>
+        </div>
+        <div class="type-card" data-value="ลาไปปฏิบัติธรรม">
+          <span class="icon">🧘</span><span class="name">ปฏิบัติธรรม</span>
+        </div>
+        <div class="type-card" data-value="ลาติดตามคู่สมรส">
+          <span class="icon">💑</span><span class="name">ติดตามคู่สมรส</span>
+        </div>
+        <div class="type-card" data-value="ลาเข้ารับการตรวจเลือก">
+          <span class="icon">🎖️</span><span class="name">ตรวจเลือกทหาร</span>
+        </div>
+        <div class="type-card" data-value="ลาไปฟื้นฟูสมรรถภาพ">
+          <span class="icon">🏃</span><span class="name">ฟื้นฟูสมรรถภาพ</span>
         </div>
       </div>
       <input type="hidden" id="leaveType">
       <div id="balanceHint" style="display:none;margin-top:10px;padding:10px 12px;border-radius:10px;font-size:12px;font-weight:600;"></div>
     </div>
 
-    <!-- ระยะเวลาลา -->
+    <!-- ระยะเวลาลา — ปฏิทินเลือกหลายวัน -->
     <div class="section">
       <div class="section-title">
-        <span class="icon">📅</span> ระยะเวลาลา
+        <span class="icon">📅</span> เลือกวันที่ลา <span class="req" style="margin-left:4px">*</span>
       </div>
-      <div class="date-row">
-        <div class="field">
-          <label>วันที่เริ่มลา <span class="req">*</span></label>
-          <input type="date" id="startDate">
-        </div>
-        <div class="field">
-          <label>วันที่สิ้นสุด <span class="req">*</span></label>
-          <input type="date" id="endDate">
-        </div>
+
+      <!-- Calendar Navigation -->
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="calPrev()">‹</button>
+        <div class="cal-month-label" id="calMonthLabel">—</div>
+        <button class="cal-nav-btn" onclick="calNext()">›</button>
       </div>
+
+      <!-- Day headers -->
+      <div class="cal-day-headers">
+        <div>จ</div><div>อ</div><div>พ</div><div>พฤ</div><div>ศ</div>
+        <div style="color:var(--red)">ส</div><div style="color:var(--red)">อา</div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="cal-grid" id="calGrid"></div>
+
+      <!-- Selected date chips -->
+      <div class="cal-selected-wrap" id="calSelectedWrap" style="display:none">
+        <div class="cal-selected-label">
+          วันที่เลือก (<span id="selectedDaysCount">0</span> วันทำการ):
+        </div>
+        <div class="cal-chips" id="calChips"></div>
+      </div>
+
+      <!-- Day badge -->
       <div class="day-badge hidden" id="dayBadge">
         <span class="count" id="dayCount">0</span>
         <div>
           <div class="label">วันทำการที่ลา</div>
-          <div class="sublabel" id="dateRangeText"></div>
+          <div class="sublabel" id="dateRangeText">กรุณาเลือกวันที่</div>
         </div>
       </div>
+
+      <!-- Period (half-day only for single-day selection) -->
       <div class="field" style="margin-top:14px">
         <label>ช่วงเวลา <span class="req">*</span></label>
         <div class="period-grid" id="periodGrid">
@@ -809,11 +897,16 @@ const LIFF_ID         = '2010068016-uNZ0EWnx';
 const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1v5BgJvcOQH7k2AN_3hj3tsSQOxG3DLjL/view?usp=share_link';
 const PORTAL_LIFF_URL  = 'https://liff.line.me/2010068016-eWjYDlXc';
 
-let lineUserId     = '';
-let selectedType   = '';
+let lineUserId      = '';
+let selectedType    = '';
 let uploadedFileB64 = '';
-let selectedPeriod = 'เต็มวัน';
+let selectedPeriod  = 'เต็มวัน';
 let registeredEmployee = null;
+
+// ===== Calendar State =====
+let calYear      = new Date().getFullYear();
+let calMonth     = new Date().getMonth();
+let calSelected  = [];  // array of 'YYYY-MM-DD' strings
 
 const DEFAULT_MASCOT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
   <defs>
@@ -885,36 +978,23 @@ async function initLIFF() {
     const profile = await liff.getProfile();
     lineUserId    = profile.userId;
 
-    // Default dates = today
-    const today    = new Date();
-    const todayStr = toDateStr(today);
-    document.getElementById('startDate').value = todayStr;
-    document.getElementById('endDate').value   = todayStr;
-    calcDays();
-
-    // Show form
-    document.getElementById('initLoading').style.display = 'none';
-    document.getElementById('mainForm').style.display    = 'block';
-
-    // Fallback userId from query param
     if (!lineUserId) {
       const params = new URLSearchParams(window.location.search);
       lineUserId   = params.get('userId') || '';
     }
 
+    document.getElementById('initLoading').style.display = 'none';
+    document.getElementById('mainForm').style.display    = 'block';
+    renderCalendar();
+
     await prefillRegisteredEmployee(profile.displayName);
 
   } catch (err) {
     console.error('LIFF init error:', err);
-    // Browser testing fallback
     lineUserId = new URLSearchParams(window.location.search).get('userId') || 'TEST_USER';
     document.getElementById('initLoading').style.display = 'none';
     document.getElementById('mainForm').style.display    = 'block';
-
-    const today = toDateStr(new Date());
-    document.getElementById('startDate').value = today;
-    document.getElementById('endDate').value   = today;
-    calcDays();
+    renderCalendar();
     await prefillRegisteredEmployee('');
   }
 }
@@ -969,73 +1049,170 @@ document.getElementById('typeGrid').addEventListener('click', e => {
 
 function updateBalanceHint() {
   const el = document.getElementById('balanceHint');
-  if (!registeredEmployee || !selectedType) { el.style.display = 'none'; return; }
-  const typeMap = {
-    'ลาพักร้อน': { bal: registeredEmployee.annualLeave,   alloc: registeredEmployee.annualAlloc   || registeredEmployee.annualMax || 20,  label: 'ลาพักร้อน', color: '#3B82F6' },
-    'ลากิจ':     { bal: registeredEmployee.personalLeave, alloc: registeredEmployee.personalAlloc || 10, label: 'ลากิจ',     color: '#14B8A6' },
-    'ลาป่วย':    { bal: registeredEmployee.sickLeave,     alloc: registeredEmployee.sickAlloc     || 30, label: 'ลาป่วย',    color: '#22C55E' },
+  if (!selectedType) { el.style.display = 'none'; return; }
+
+  // Tracked leave types — show balance
+  if (registeredEmployee) {
+    const tracked = {
+      'ลาพักร้อน': { bal: registeredEmployee.annualLeave,   alloc: registeredEmployee.annualAlloc   || 20, label: 'ลาพักร้อน' },
+      'ลากิจ':     { bal: registeredEmployee.personalLeave, alloc: registeredEmployee.personalAlloc || 45, label: 'ลากิจส่วนตัว' },
+      'ลาป่วย':    { bal: registeredEmployee.sickLeave,     alloc: registeredEmployee.sickAlloc     || 60, label: 'ลาป่วย' },
+    };
+    const info = tracked[selectedType];
+    if (info) {
+      const bal = Number(info.bal) || 0;
+      el.style.display = 'block';
+      el.style.background = bal <= 0 ? '#FEE2E2' : '#F0FDF4';
+      el.style.color      = bal <= 0 ? '#991B1B' : '#166534';
+      el.innerHTML = bal <= 0
+        ? `⚠️ ${info.label}: วันลาคงเหลือ 0 วัน`
+        : `✅ ${info.label}: คงเหลือ <strong>${bal}</strong> จาก ${info.alloc} วัน`;
+      return;
+    }
+  }
+
+  // Non-tracked types — show quota info
+  const quotaMap = {
+    'ลาคลอดบุตร':              { text: 'สิทธิสูงสุด 90 วัน/ครั้ง' },
+    'ลาเพื่อดูแลบุตร':         { text: 'สิทธิสูงสุด 15 วัน/ครั้ง' },
+    'ลาอุปสมบท':               { text: 'สิทธิสูงสุด 120 วัน/ครั้ง · ต้องมีอายุงาน ≥ 12 เดือน' },
+    'ลาไปปฏิบัติธรรม':         { text: 'สิทธิสูงสุด 30 วัน/ครั้ง' },
+    'ลาติดตามคู่สมรส':         { text: 'สิทธิสูงสุด 730 วัน/ครั้ง' },
+    'ลาเข้ารับการตรวจเลือก':   { text: 'ตามที่ราชการกำหนด' },
+    'ลาไปฟื้นฟูสมรรถภาพ':     { text: 'สิทธิสูงสุด 12 เดือน/โปรแกรม' },
   };
-  const info = typeMap[selectedType];
-  if (!info) { el.style.display = 'none'; return; }
-  const bal = Number(info.bal) || 0;
-  const warn = bal <= 0;
-  el.style.display = 'block';
-  el.style.background = warn ? '#FEE2E2' : '#F0FDF4';
-  el.style.color      = warn ? '#991B1B' : '#166534';
-  el.innerHTML = warn
-    ? `⚠️ ${info.label}: วันลาคงเหลือ 0 วัน — ยื่นได้แต่หัวหน้าอาจไม่อนุมัติ`
-    : `✅ ${info.label}: คงเหลือ <strong>${bal}</strong> จาก ${info.alloc} วัน`;
+  const qi = quotaMap[selectedType];
+  if (qi) {
+    el.style.display = 'block';
+    el.style.background = '#F3F4F6';
+    el.style.color = '#374151';
+    el.innerHTML = `ℹ️ ${selectedType}: ${qi.text}`;
+    return;
+  }
+  el.style.display = 'none';
 }
 
 document.getElementById('periodGrid').addEventListener('click', e => {
   const card = e.target.closest('.period-card');
-  if (!card) return;
+  if (!card || card.classList.contains('disabled')) return;
   document.querySelectorAll('.period-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
   selectedPeriod = card.dataset.value;
-  calcDays();
+  updateCalendarBadge();
 });
 
-// ===== Calculate Working Days =====
-function calcDays() {
-  const s = document.getElementById('startDate').value;
-  const e = document.getElementById('endDate').value;
-  if (!s || !e) return;
+// ===== Calendar Functions =====
+function renderCalendar() {
+  const thaiMonths = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                      'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('calMonthLabel').textContent = `${thaiMonths[calMonth]} ${calYear + 543}`;
 
-  const start = new Date(s);
-  const end   = new Date(e);
-  if (end < start) {
-    document.getElementById('endDate').value = s;
-    return calcDays();
+  const firstDay  = new Date(calYear, calMonth, 1);
+  const lastDay   = new Date(calYear, calMonth + 1, 0);
+  const today     = new Date(); today.setHours(0,0,0,0);
+
+  let startDow = firstDay.getDay();
+  startDow = startDow === 0 ? 6 : startDow - 1;  // Monday-first
+
+  let html = '';
+  for (let i = 0; i < startDow; i++) html += '<div class="cal-cell empty"></div>';
+
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const date    = new Date(calYear, calMonth, d);
+    const dow     = date.getDay();
+    const weekend = dow === 0 || dow === 6;
+    const past    = date < today;
+    const ds      = toDateStr(date);
+    const selected = calSelected.includes(ds);
+    const isToday  = toDateStr(date) === toDateStr(today);
+
+    let cls = 'cal-cell';
+    if (weekend)  cls += ' weekend';
+    if (selected) cls += ' selected';
+    if (past)     cls += ' past';
+    if (isToday && !selected) cls += ' today';
+
+    const onclick = (!weekend && !past) ? `onclick="toggleDate('${ds}')"` : '';
+    html += `<div class="${cls}" ${onclick}>${d}</div>`;
   }
 
-  let days = 0;
-  const cur = new Date(start);
-  while (cur <= end) {
-    const dow = cur.getDay();
-    if (dow !== 0 && dow !== 6) days++;
-    cur.setDate(cur.getDate() + 1);
+  document.getElementById('calGrid').innerHTML = html;
+  updateCalendarChips();
+  updateCalendarBadge();
+}
+
+function toggleDate(ds) {
+  const idx = calSelected.indexOf(ds);
+  if (idx >= 0) {
+    calSelected.splice(idx, 1);
+  } else {
+    calSelected.push(ds);
+    calSelected.sort();
   }
 
-  if (selectedPeriod !== 'เต็มวัน') {
-    if (toDateStr(start) !== toDateStr(end)) {
-      selectedPeriod = 'เต็มวัน';
-      document.querySelectorAll('.period-card').forEach(c => c.classList.toggle('selected', c.dataset.value === 'เต็มวัน'));
-    } else {
-      days = days > 0 ? 0.5 : 0;
-    }
+  const moreThanOne = calSelected.length > 1;
+  document.querySelectorAll('.period-card').forEach(c => {
+    const isFullDay = c.dataset.value === 'เต็มวัน';
+    c.classList.toggle('disabled', moreThanOne && !isFullDay);
+  });
+  if (moreThanOne && selectedPeriod !== 'เต็มวัน') {
+    selectedPeriod = 'เต็มวัน';
+    document.querySelectorAll('.period-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.value === 'เต็มวัน');
+    });
   }
 
+  renderCalendar();
+}
+
+function removeDate(ds) {
+  calSelected = calSelected.filter(d => d !== ds);
+  renderCalendar();
+}
+
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCalendar();
+}
+
+function updateCalendarChips() {
+  const wrap  = document.getElementById('calSelectedWrap');
+  const chips = document.getElementById('calChips');
+  const count = document.getElementById('selectedDaysCount');
+
+  if (calSelected.length === 0) { wrap.style.display = 'none'; return; }
+
+  const days = (selectedPeriod !== 'เต็มวัน' && calSelected.length === 1) ? 0.5 : calSelected.length;
+  count.textContent = days;
+  wrap.style.display = 'block';
+  chips.innerHTML = calSelected.map(ds => {
+    const d = new Date(ds + 'T00:00:00');
+    return `<div class="date-chip">${formatThai(d)}<span class="date-chip-x" onclick="removeDate('${ds}')">×</span></div>`;
+  }).join('');
+}
+
+function updateCalendarBadge() {
   const badge = document.getElementById('dayBadge');
+  if (calSelected.length === 0) { badge.classList.add('hidden'); return; }
+
+  const days = (selectedPeriod !== 'เต็มวัน' && calSelected.length === 1) ? 0.5 : calSelected.length;
   badge.classList.remove('hidden', 'warn');
   if (days >= 5) badge.classList.add('warn');
   document.getElementById('dayCount').textContent = days;
-  document.getElementById('dateRangeText').textContent =
-    `${formatThai(start)} — ${formatThai(end)}`;
-}
 
-document.getElementById('startDate').addEventListener('change', calcDays);
-document.getElementById('endDate').addEventListener('change', calcDays);
+  const first = new Date(calSelected[0] + 'T00:00:00');
+  const last  = new Date(calSelected[calSelected.length - 1] + 'T00:00:00');
+  document.getElementById('dateRangeText').textContent = calSelected.length === 1
+    ? formatThai(first)
+    : `${formatThai(first)} — ${formatThai(last)}`;
+}
 
 // ===== File Upload =====
 document.getElementById('fileInput').addEventListener('change', function() {
@@ -1054,20 +1231,18 @@ document.getElementById('fileInput').addEventListener('change', function() {
   reader.readAsDataURL(file);
 });
 
-// ===== Validate — เหตุผลไม่บังคับแล้ว =====
+// ===== Validate =====
 function validate() {
   let ok = true;
 
-  // Required fields (ไม่รวม reason)
-  const requiredFields = ['name', 'department', 'startDate', 'endDate'];
-  requiredFields.forEach(id => {
-    const el = document.getElementById(id);
-    el.classList.remove('error');
-    if (!el.value.trim()) { el.classList.add('error'); ok = false; }
-  });
-
-  if (!ok) {
-    showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ');
+  // Name/dept only required if no registered employee
+  if (!registeredEmployee) {
+    ['name', 'department'].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('error');
+      if (!el.value.trim()) { el.classList.add('error'); ok = false; }
+    });
+    if (!ok) showToast('กรุณากรอกข้อมูลที่จำเป็นให้ครบ');
   }
 
   if (!selectedType) {
@@ -1075,13 +1250,11 @@ function validate() {
     ok = false;
   }
 
-  const start = new Date(document.getElementById('startDate').value);
-  const end   = new Date(document.getElementById('endDate').value);
-  if (end < start) {
-    document.getElementById('endDate').classList.add('error');
-    showToast('วันที่สิ้นสุดต้องไม่ก่อนวันที่เริ่ม');
+  if (calSelected.length === 0) {
+    showToast('กรุณาเลือกวันที่ลาอย่างน้อย 1 วัน');
     ok = false;
   }
+
   return ok;
 }
 
@@ -1098,20 +1271,22 @@ async function submitForm() {
   btn.classList.add('loading');
   btn.disabled = true;
 
-  const days = Number(document.getElementById('dayCount').textContent) || 1;
+  const thaiDates = calSelected.map(ds => formatThai(new Date(ds + 'T00:00:00')));
+  const days = (selectedPeriod !== 'เต็มวัน' && calSelected.length === 1) ? 0.5 : calSelected.length;
 
   const payload = {
-    source:     'liff',
-    userId:     lineUserId,
-    name:       document.getElementById('name').value.trim(),
-    department: document.getElementById('department').value.trim(),
-    leaveType:  selectedType,
-    startDate:  formatThai(new Date(document.getElementById('startDate').value)),
-    endDate:    formatThai(new Date(document.getElementById('endDate').value)),
-    days:       days,
-    period:     selectedPeriod,
-    reason:     document.getElementById('reason').value.trim(),  // อาจว่างก็ได้
-    attachment: uploadedFileB64 ? 'มีเอกสารแนบ' : '',
+    source:        'liff',
+    userId:        lineUserId,
+    name:          (registeredEmployee ? registeredEmployee.name : document.getElementById('name').value.trim()),
+    department:    (registeredEmployee ? registeredEmployee.department : document.getElementById('department').value.trim()),
+    leaveType:     selectedType,
+    startDate:     thaiDates[0],
+    endDate:       thaiDates[thaiDates.length - 1],
+    selectedDates: thaiDates,
+    days:          days,
+    period:        selectedPeriod,
+    reason:        document.getElementById('reason').value.trim(),
+    attachment:    uploadedFileB64 ? 'มีเอกสารแนบ' : '',
   };
 
   try {
