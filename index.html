@@ -608,11 +608,11 @@
       border-radius: 8px; font-size: 13px; font-weight: 600;
       cursor: pointer; color: var(--gray-800); transition: background 0.15s;
     }
-    .cal-cell:not(.empty):not(.weekend):not(.past):hover { background: var(--gold-light); }
-    .cal-cell:not(.empty):not(.weekend):not(.past):active { transform: scale(0.88); }
+    .cal-cell:not(.empty):not(.weekend):hover { background: var(--gold-light); }
+    .cal-cell:not(.empty):not(.weekend):active { transform: scale(0.88); }
     .cal-cell.empty { cursor: default; }
     .cal-cell.weekend { color: var(--red); opacity: 0.45; cursor: default; }
-    .cal-cell.past { opacity: 0.28; cursor: default; }
+    .cal-cell.past { opacity: 0.5; }
     .cal-cell.selected {
       background: var(--gold) !important; color: var(--navy); font-weight: 800;
       box-shadow: 0 2px 8px rgba(197,165,90,0.4);
@@ -636,6 +636,36 @@
       color: var(--gray-600); font-weight: 400;
     }
     .period-card.disabled { opacity: 0.38; pointer-events: none; }
+
+    /* ===== Leave Type Extras ===== */
+    .type-card.no-rights {
+      opacity: 0.38;
+      pointer-events: none;
+      position: relative;
+    }
+    .type-card.no-rights::after {
+      content: '🔒';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 10px;
+    }
+    .show-more-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 14px;
+      border: 1.5px dashed var(--gray-200);
+      border-radius: 12px;
+      background: transparent;
+      color: var(--gray-600);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    .show-more-btn:active { background: var(--gold-pale); border-color: var(--gold); }
+    .show-more-btn.open { border-color: var(--gold); color: var(--navy); background: var(--gold-pale); }
 
     /* ===== Misc ===== */
     .info-note {
@@ -672,7 +702,9 @@
       align-items: center;
       justify-content: center;
       font-weight: 800;
+      font-size: 18px;
       flex: 0 0 auto;
+      overflow: hidden;
     }
     .employee-summary .name { color: var(--navy); font-weight: 800; font-size: 15px; line-height: 1.3; }
     .employee-summary .dept { color: var(--gray-600); font-size: 12px; line-height: 1.4; margin-top: 2px; }
@@ -750,6 +782,11 @@
         <div class="type-card" data-value="ลาป่วย">
           <span class="icon">🏥</span><span class="name">ลาป่วย</span>
         </div>
+      </div>
+      <button class="show-more-btn" id="showMoreBtn" onclick="toggleExtraTypes()">
+        ▾ ดูประเภทการลาเพิ่มเติม (7 รายการ)
+      </button>
+      <div class="type-grid" id="extraTypesGrid" style="display:none;margin-top:8px">
         <div class="type-card" data-value="ลาคลอดบุตร">
           <span class="icon">👶</span><span class="name">ลาคลอดบุตร</span>
         </div>
@@ -898,6 +935,7 @@ const MASCOT_IMAGE_URL = 'https://drive.google.com/file/d/1v5BgJvcOQH7k2AN_3hj3t
 const PORTAL_LIFF_URL  = 'https://liff.line.me/2010068016-eWjYDlXc';
 
 let lineUserId      = '';
+let lineUserPic     = '';
 let selectedType    = '';
 let uploadedFileB64 = '';
 let selectedPeriod  = 'เต็มวัน';
@@ -977,6 +1015,7 @@ async function initLIFF() {
 
     const profile = await liff.getProfile();
     lineUserId    = profile.userId;
+    lineUserPic   = profile.pictureUrl || '';
 
     if (!lineUserId) {
       const params = new URLSearchParams(window.location.search);
@@ -1009,6 +1048,7 @@ async function prefillRegisteredEmployee(fallbackName) {
       document.getElementById('name').value = registeredEmployee.name || '';
       document.getElementById('department').value = registeredEmployee.department || '';
       showRegisteredEmployeeSummary(registeredEmployee);
+      updateTypeGridByRights(registeredEmployee);
       return;
     }
   } catch (err) {
@@ -1033,19 +1073,46 @@ function showRegisteredEmployeeSummary(emp) {
   document.getElementById('employeeSummary').classList.add('show');
   document.getElementById('employeeSummaryName').textContent = emp.name || 'ไม่ระบุชื่อ';
   document.getElementById('employeeSummaryDept').textContent = emp.department || 'ไม่ระบุแผนก';
-  document.getElementById('employeeAvatar').textContent = (emp.name || 'ผ').trim().charAt(0);
+  const avatar = document.getElementById('employeeAvatar');
+  if (lineUserPic) {
+    avatar.innerHTML = `<img src="${lineUserPic}" style="width:100%;height:100%;object-fit:cover">`;
+  } else {
+    avatar.textContent = (emp.name || 'ผ').trim().charAt(0);
+  }
 }
 
 // ===== Leave Type Selection =====
-document.getElementById('typeGrid').addEventListener('click', e => {
+function handleTypeCardClick(e) {
   const card = e.target.closest('.type-card');
-  if (!card) return;
+  if (!card || card.classList.contains('no-rights')) return;
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   card.classList.add('selected');
   selectedType = card.dataset.value;
   document.getElementById('leaveType').value = selectedType;
   updateBalanceHint();
-});
+}
+document.getElementById('typeGrid').addEventListener('click', handleTypeCardClick);
+document.getElementById('extraTypesGrid').addEventListener('click', handleTypeCardClick);
+
+function toggleExtraTypes() {
+  const grid = document.getElementById('extraTypesGrid');
+  const btn  = document.getElementById('showMoreBtn');
+  const isOpen = grid.style.display !== 'none';
+  grid.style.display = isOpen ? 'none' : 'grid';
+  btn.textContent = isOpen
+    ? '▾ ดูประเภทการลาเพิ่มเติม (7 รายการ)'
+    : '▴ ซ่อนประเภทการลาเพิ่มเติม';
+  btn.classList.toggle('open', !isOpen);
+}
+
+function updateTypeGridByRights(emp) {
+  if (!emp || !emp.seniority) return;
+  const totalMonths = emp.seniority.years * 12 + emp.seniority.months;
+  document.querySelectorAll('#extraTypesGrid .type-card').forEach(card => {
+    const noRights = (card.dataset.value === 'ลาอุปสมบท' && totalMonths < 12);
+    card.classList.toggle('no-rights', noRights);
+  });
+}
 
 function updateBalanceHint() {
   const el = document.getElementById('balanceHint');
@@ -1132,7 +1199,7 @@ function renderCalendar() {
     if (past)     cls += ' past';
     if (isToday && !selected) cls += ' today';
 
-    const onclick = (!weekend && !past) ? `onclick="toggleDate('${ds}')"` : '';
+    const onclick = !weekend ? `onclick="toggleDate('${ds}')"` : '';
     html += `<div class="${cls}" ${onclick}>${d}</div>`;
   }
 
