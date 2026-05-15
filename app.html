@@ -1084,30 +1084,55 @@ function renderTeamItem(leave, showActions) {
 }
 
 async function approveFromLiff(leaveId) {
-  if (typeof liff !== 'undefined' && liff.isInClient()) {
-    try {
-      await liff.sendMessages([{ type: 'text', text: 'อนุมัติ ' + leaveId }]);
-      showToast('✅ ส่งคำขออนุมัติแล้ว รอการยืนยันในแชท');
-      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 3000);
-    } catch (e) {
-      showToast('💡 พิมพ์ "อนุมัติ ' + leaveId + '" ในแชท LINE');
+  showToast('⏳ กำลังดำเนินการ...');
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ source: 'liff', action: 'approve_leave', leaveId, managerId: userId })
+    });
+    const d = await r.json();
+    if (d.success) {
+      showToast('✅ อนุมัติสำเร็จ');
+      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 1500);
+    } else {
+      showToast('❌ ' + (d.message || 'เกิดข้อผิดพลาด'));
     }
-  } else {
-    showToast('💡 พิมพ์ "อนุมัติ ' + leaveId + '" ในแชท LINE');
+  } catch (e) {
+    showToast('❌ เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่');
   }
 }
 
-async function rejectFromLiff(leaveId) {
-  if (typeof liff !== 'undefined' && liff.isInClient()) {
-    try {
-      await liff.sendMessages([{ type: 'text', text: 'ไม่อนุมัติ ' + leaveId }]);
-      showToast('✅ ส่งคำขอไม่อนุมัติแล้ว รอการยืนยันในแชท');
-      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 3000);
-    } catch (e) {
-      showToast('💡 พิมพ์ "ไม่อนุมัติ ' + leaveId + '" ในแชท LINE');
+function rejectFromLiff(leaveId) {
+  const modal = document.getElementById('rejectReasonModal');
+  modal.dataset.leaveId = leaveId;
+  modal.style.display = 'flex';
+}
+
+function closeRejectModal() {
+  document.getElementById('rejectReasonModal').style.display = 'none';
+}
+
+async function confirmReject(reason) {
+  const modal   = document.getElementById('rejectReasonModal');
+  const leaveId = modal.dataset.leaveId;
+  closeRejectModal();
+  showToast('⏳ กำลังดำเนินการ...');
+  try {
+    const r = await fetch(GAS_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ source: 'liff', action: 'reject_leave', leaveId, managerId: userId, reason })
+    });
+    const d = await r.json();
+    if (d.success) {
+      showToast('✅ ไม่อนุมัติสำเร็จ');
+      setTimeout(() => { tabLoaded.team = false; loadTeam(); }, 1500);
+    } else {
+      showToast('❌ ' + (d.message || 'เกิดข้อผิดพลาด'));
     }
-  } else {
-    showToast('💡 พิมพ์ "ไม่อนุมัติ ' + leaveId + '" ในแชท LINE');
+  } catch (e) {
+    showToast('❌ เชื่อมต่อไม่สำเร็จ กรุณาลองใหม่');
   }
 }
 
@@ -1237,5 +1262,21 @@ function showToast(msg) {
 // ── Start ──
 init();
 </script>
+
+<!-- ── Reject Reason Modal ── -->
+<div id="rejectReasonModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:flex-end;justify-content:center;padding:0 16px 20px">
+  <div style="background:#fff;border-radius:20px 20px 16px 16px;padding:20px;width:100%;max-width:420px">
+    <div style="font-size:15px;font-weight:800;color:#0D1B3E;margin-bottom:4px">❌ เหตุผลที่ไม่อนุมัติ</div>
+    <div style="font-size:12px;color:#6B7280;margin-bottom:14px">เลือกเหตุผล หรือกด "ยกเลิก"</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="confirmReject('งานเร่งด่วน/ต้องการกำลังพล')"          style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;text-align:left;cursor:pointer">🔥 งานเร่งด่วน / ต้องการกำลังพล</button>
+      <button onclick="confirmReject('บุคลากรในแผนกไม่เพียงพอในช่วงเวลานั้น')" style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;text-align:left;cursor:pointer">👥 บุคลากรในแผนกไม่เพียงพอ</button>
+      <button onclick="confirmReject('วันลาคงเหลือไม่เพียงพอ')"              style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;text-align:left;cursor:pointer">📅 วันลาคงเหลือไม่พอ</button>
+      <button onclick="confirmReject('เอกสารประกอบไม่ครบถ้วน กรุณายื่นใหม่')" style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;text-align:left;cursor:pointer">📋 เอกสารไม่ครบ กรุณายื่นใหม่</button>
+      <button onclick="confirmReject('โปรดติดต่อหัวหน้าโดยตรงเพื่อชี้แจง')"  style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#fff;font-size:13px;font-weight:600;text-align:left;cursor:pointer">💬 โปรดติดต่อหัวหน้าโดยตรง</button>
+      <button onclick="closeRejectModal()"                                     style="padding:12px;border-radius:10px;border:1.5px solid #E5E7EB;background:#F3F4F6;font-size:13px;font-weight:600;text-align:center;cursor:pointer;color:#6B7280;margin-top:4px">ยกเลิก</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
